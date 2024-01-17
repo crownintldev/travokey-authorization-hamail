@@ -61,9 +61,14 @@ const UserSchema = new mongoose.Schema(
     forgetPasswordAuthToken: {
       type: String,
     },
-    token: {
-      type: String,
-    },
+    tokens: [
+      {
+        token: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
     // accountSetupStatus: {
     //   type: String,
     //   enum: ["pending", "completed"],
@@ -113,17 +118,16 @@ const UserSchema = new mongoose.Schema(
 );
 
 //===================== Password hash middleware =================//
-UserSchema.pre("save", async function save(next) {
-  const user = this;
+UserSchema.methods.hashing = async function() {
   try {
     const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(user.password, salt);
-    user.password = hash;
-    next();
+    const hash = await bcrypt.hash(this.password, salt);
+    this.password = hash;
   } catch (err) {
-    return next(err);
+    // Handle the error appropriately, e.g., log or throw an error
+    throw err;
   }
-});
+};
 
 //===================== Helper method for validating user's password =================//
 UserSchema.methods.comparePassword = async function comparePassword(
@@ -134,31 +138,24 @@ UserSchema.methods.comparePassword = async function comparePassword(
     return isMatch;
   } catch (error) {
     console.log("=========== Error in Comparing Password", error);
+    return false;
   }
 };
 
-UserSchema.methods.generateAuthToken = async function (extra = "") {
+UserSchema.methods.generateAuthToken = async function () {
   let user = this;
   let access = "auth";
 
-  let token = jwt
-    .sign(
-      {
-        _id: user._id.toHexString(),
-        access,
-        email: user.email,
-      },
-      secretKey,
-      {
-        expiresIn: process.env.authTokenExpiresIn,
-      }
-    )
-    .toString();
-  user.token = token;
-  user.lastLogin = new Date();
-  return user.save().then(() => {
+  try {
+    let token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.authTokenExpiresIn || "9d",
+    });
+    this.tokens = this.tokens.concat({ token });
     return token;
-  });
+  } catch (error) {
+    console.log("error on token assign", error);
+    // res.send("error on token assign", error);
+  }
 };
 
 UserSchema.statics.findByToken = function (token) {
@@ -179,4 +176,3 @@ UserSchema.statics.findByToken = function (token) {
 
 // Export the User model
 module.exports = mongoose.model("User", UserSchema);
-

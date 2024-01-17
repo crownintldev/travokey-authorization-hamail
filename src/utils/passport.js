@@ -10,7 +10,6 @@ passport.use(
     async (email, password, done) => {
       try {
         const user = await userModel.findOne({ email: email });
-
         if (!user) {
           console.log("passport: User not found");
           return done(null, false, { message: "Incorrect email." });
@@ -20,9 +19,9 @@ passport.use(
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
-
         return done(null, user);
       } catch (error) {
+        console.log(error);
         return done(error);
       }
     }
