@@ -35,7 +35,6 @@ exports.signin = handleAsync(async (req, res, next) => {
         return Response(res, 500, "Internal Server Error");
       }
       const token = await user.generateAuthToken();
-      console.log(token);
       res.cookie("jwt", token, {
         expires: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000),
         httpOnly: true,
@@ -43,51 +42,36 @@ exports.signin = handleAsync(async (req, res, next) => {
 
       const response = await user.save();
 
-      // user.tokenVersion += 1;
-      // const token = jwt.sign(
-      //   { _id: user._id, tokenVersion: user.tokenVersion },
-      //   process.env.JWT_SECRET,
-      //   {
-      //     expiresIn: "9d",
-      //   }
-      // );
-      // res.cookie("token", token, { httpOnly: true });
-
-      // const response = await updateApi(model, user._id, {
-      //   tokenVersion: user.tokenVersion,
-      // });
-      // const userdata = { token, response };
-      // console.log(userdata);
       return Response(res, 201, constants.USER_LOGIN_SUCCESS, user);
     });
   })(req, res, next);
 }, modelName);
 
-exports.logoutalldevices = handleAsync(async (req, res) => {
-  console.log(req.auth);
-  req.auth.tokenVersion += 1; // Use req.auth instead of req.user
-  const response = await updateApi(model, req.auth._id, {
-    tokenVersion: req.auth.tokenVersion,
-  });
+exports.logout = handleAsync(async (req, res) => {
+  const user = req.user;
+  const tokenToRemove = req.cookies.jwt;
+  await model.updateOne(
+    { _id: user._id },
+    { $pull: { tokens: { token: tokenToRemove } } }
+  );
+
+  res.clearCookie("jwt");
   return Response(res, 200, "Logout successful");
-},modelName);
+});
+
+exports.logoutalldevices = handleAsync(async (req, res) => {
+  const user = req.user;
+  user.tokens.forEach((token) => {
+    res.clearCookie("jwt", { token: token.token }); // Assuming "jwt" is the cookie name
+  });
+  user.tokens = [];
+  await user.save();
+
+  return Response(res, 200, "Logout successful");
+}, modelName);
 
 exports.test = (req, res) => {
   console.log(req.cookies);
   Response(res, 200, "Test OK");
 };
 
-exports.auth = handleAsync(async(req,res,next)=>{
-  const token =req.cookies.jwt;
-
-  const verify = jwt.verify(token,process.env.JWT_SECRET)
-  console.log(verify)
-  const user = await model.findOne({_id:verify._id})
-  console.log(user)
-},modelName)
-
-exports.requireSignin = expressJwt({
-  secret: process.env.JWT_SECRET,
-  userProperty: "auth",
-  algorithms: ["HS256"],
-});
