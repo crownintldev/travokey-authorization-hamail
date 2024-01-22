@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@casl/ability": "^6.5.0",
     "@tablets/express-mongoose-api": "^1.0.9",
     "bcrypt": "^5.1.1",
     "cloudinary": "^1.41.3",

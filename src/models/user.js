@@ -63,11 +63,14 @@ const UserSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        device: {
+          type: String,
+        },
       },
     ],
     roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role" }],
     permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
-    branch: [{ type: mongoose.Schema.Types.ObjectId, ref: "Branch" }],
+    branches: [{ type: mongoose.Schema.Types.ObjectId, ref: "Branch" }],
     // accountSetupStatus: {
     //   type: String,
     //   enum: ["pending", "completed"],
@@ -136,15 +139,25 @@ UserSchema.methods.comparePassword = async function comparePassword(
   }
 };
 
-UserSchema.methods.generateAuthToken = async function () {
+UserSchema.methods.generateAuthToken = async function (req) {
   let user = this;
-  let access = "auth";
-
+  const device = req.headers['user-agent'] + req.ip;
   try {
     let token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.authTokenExpiresIn || "9d",
     });
-    this.tokens = this.tokens.concat({ token });
+    // this.tokens = this.tokens.concat({ token });
+
+    // Check if a token for this device already exists
+    let existingTokenIndex = user.tokens.findIndex((t) => t.device === device);
+    if (existingTokenIndex !== -1) {
+      // Update existing token
+      user.tokens[existingTokenIndex].token = token;
+    } else {
+      // Add new token
+      user.tokens.push({ token, device });
+    }
+
     return token;
   } catch (error) {
     console.log("error on token assign", error);

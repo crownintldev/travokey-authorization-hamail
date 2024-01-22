@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 const {
   handleAsync,
   constants,
-  createApi,
-  updateApi,
+  aggregationByIds,
   Response,
 } = require("@tablets/express-mongoose-api");
+const {customParams} = require("./user")
 const { expressjwt: expressJwt } = require("express-jwt"); // for authorization
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
@@ -16,16 +16,17 @@ const model = mongoose.model(`${modelName}`);
 
 exports.signup = handleAsync(async (req, res) => {
   const data = req.body;
+  
   const api = new model(data);
   await api.hashing();
-  await api.generateAuthToken();
+  await api.generateAuthToken(req);
   const response = await api.save();
-  // const response = await createApi(model, data);
   return Response(res, 200, `${modelName} Create Successfully`, [response], 1);
 }, modelName);
 
 exports.signin = handleAsync(async (req, res, next) => {
   const data = req.body;
+  
   passport.authenticate("local", {}, (err, user) => {
     if (err || !user) {
       return Response(res, 401, constants.EMAIL_PASSWORD_ERROR);
@@ -34,15 +35,15 @@ exports.signin = handleAsync(async (req, res, next) => {
       if (err) {
         return Response(res, 500, "Internal Server Error");
       }
-      const token = await user.generateAuthToken();
+      const token = await user.generateAuthToken(req);
       res.cookie("jwt", token, {
         expires: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000),
         httpOnly: true,
       });
 
-      const response = await user.save();
-
-      return Response(res, 201, constants.USER_LOGIN_SUCCESS, user);
+      const signUser = await user.save();
+     const response =  await aggregationByIds({model,ids:[signUser._id],customParams})
+      return Response(res, 201, constants.USER_LOGIN_SUCCESS, response);
     });
   })(req, res, next);
 }, modelName);
@@ -72,6 +73,12 @@ exports.logoutalldevices = handleAsync(async (req, res) => {
 
 exports.test = (req, res) => {
   console.log(req.cookies);
-  Response(res, 200, "Test OK");
+  const user = req.user;
+  if (!user.abilities.can("create", "testing")) {
+    return Response(res, 403, "Forbidden");
+  }
+  return Response(res, 200, "Test OK");
 };
+
+
 

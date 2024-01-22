@@ -16,9 +16,9 @@ const {
 let modelName = model.modelName;
 
 exports.create = handleAsync(async (req, res) => {
-  const { name } = req.body;
+  const { name,status } = req.body;
   // req.body destructuring
-  const data = { name };
+  const data = { name,status };
 
    const response = await createApi(model, data);
   return Response(res, 200, `${modelName} Create Successfully`, [response], 1);

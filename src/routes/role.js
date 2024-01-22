@@ -8,7 +8,7 @@ const {requireSignin} = require("../middleware/auth-middleware")
 
 router.post("/role/create",create)
 router.put("/role/update/:id",update)
-router.get("/role",requireSignin,list)
-router.delete("/role/remove",requireSignin,remove)
+router.get("/role",list)
+router.delete("/role/remove",remove)
 
 module.exports = router;
