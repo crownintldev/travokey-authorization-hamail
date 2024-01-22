@@ -39,9 +39,15 @@ const port = process.env.PORT || 9000;
 
 
 const auth = require("./routes/auth")
+const role = require("./routes/role")
+const permission = require("./routes/permission")
+const branch = require("./routes/branch")
 
 //routes
 app.use("/api", auth);
+app.use("/api", role);
+app.use("/api", permission);
+app.use("/api", branch);
 
 
 

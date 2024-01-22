@@ -13,3 +13,9 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
   // console.log(user)
   next();
 }, modelName);
+
+exports.checkpost =  handleAsync(async (req, res, next) => {
+  const user = req.user;
+  
+  next();
+}, modelName);

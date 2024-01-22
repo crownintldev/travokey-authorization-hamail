@@ -37,11 +37,6 @@ const UserSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
     },
-    status: {
-      type: String,
-      enum: ["pending", "active", "block", "delete", "rejected"],
-      default: "pending",
-    },
     address: {
       type: String,
       trim: true,
@@ -54,9 +49,10 @@ const UserSchema = new mongoose.Schema(
     profileImageUrl: {
       type: String,
     },
-    tokenVersion: {
-      type: Number,
-      default: 0,
+    status: {
+      type: String,
+      enum: ["pending", "active", "block", "deleted", "rejected"],
+      default: "pending",
     },
     forgetPasswordAuthToken: {
       type: String,
@@ -69,6 +65,9 @@ const UserSchema = new mongoose.Schema(
         },
       },
     ],
+    roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role" }],
+    permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
+    branch: [{ type: mongoose.Schema.Types.ObjectId, ref: "Branch" }],
     // accountSetupStatus: {
     //   type: String,
     //   enum: ["pending", "completed"],
@@ -79,11 +78,6 @@ const UserSchema = new mongoose.Schema(
     //   type: String,
     //   enum: ["administrative", "staff"],
     //   required: [true, "Account Type is required"],
-    // },
-    // role: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Role",
-    //   required: [true, "Role is required"],
     // },
     // dbConfig: {
     //   type: String,
@@ -118,7 +112,7 @@ const UserSchema = new mongoose.Schema(
 );
 
 //===================== Password hash middleware =================//
-UserSchema.methods.hashing = async function() {
+UserSchema.methods.hashing = async function () {
   try {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(this.password, salt);
@@ -157,7 +151,6 @@ UserSchema.methods.generateAuthToken = async function () {
     // res.send("error on token assign", error);
   }
 };
-
 
 // Export the User model
 module.exports = mongoose.model("User", UserSchema);
