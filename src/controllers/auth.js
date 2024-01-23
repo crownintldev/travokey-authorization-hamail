@@ -20,13 +20,13 @@ exports.signup = handleAsync(async (req, res) => {
   const api = new model(data);
   await api.hashing();
   await api.generateAuthToken(req);
-  const response = await api.save();
-  return Response(res, 200, `${modelName} Create Successfully`, [response], 1);
+  const signUser = await api.save();
+  const response =  await aggregationByIds({model,ids:[signUser._id],customParams})
+  return Response(res, 200, `${modelName} Create Successfully`, response);
 }, modelName);
 
 exports.signin = handleAsync(async (req, res, next) => {
   const data = req.body;
-  
   passport.authenticate("local", {}, (err, user) => {
     if (err || !user) {
       return Response(res, 401, constants.EMAIL_PASSWORD_ERROR);
@@ -72,12 +72,14 @@ exports.logoutalldevices = handleAsync(async (req, res) => {
 }, modelName);
 
 exports.test = (req, res) => {
-  console.log(req.cookies);
   const user = req.user;
-  if (!user.abilities.can("create", "testing")) {
-    return Response(res, 403, "Forbidden");
-  }
+  // if (!user.abilities.can("create", "testing")) {
+  //   return Response(res, 403, "Forbidden");
+  // }
   return Response(res, 200, "Test OK");
+};
+exports.me = (req, res) => {
+  return Response(res, 200, "Test Me OK");
 };
 
 

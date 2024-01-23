@@ -49,6 +49,7 @@ const customParams = {
     gender: 1,
     status: 1,
     roles: 1,
+    tokens:1,
     permissions: 1,
     branches: 1,
     createdAt: 1,
