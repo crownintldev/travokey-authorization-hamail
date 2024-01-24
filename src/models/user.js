@@ -69,8 +69,13 @@ const UserSchema = new mongoose.Schema(
       },
     ],
     roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role" }],
-    permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
-    branches: [{ type: mongoose.Schema.Types.ObjectId, ref: "Branch" }],
+    // permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
+    appPermissions:{
+      type: [String],
+      enum: ["administrator","account"]
+    },
+    // "evisa","flight","hotel booking"
+    branch: { type: mongoose.Schema.Types.ObjectId, ref: "Branch" },
     // accountSetupStatus: {
     //   type: String,
     //   enum: ["pending", "completed"],
@@ -115,16 +120,18 @@ const UserSchema = new mongoose.Schema(
 );
 
 //===================== Password hash middleware =================//
-UserSchema.methods.hashing = async function () {
+
+UserSchema.statics.hashing = async function (data) {
   try {
     const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(this.password, salt);
-    this.password = hash;
+    const hash = await bcrypt.hash(data.password, salt);
+    data.password = hash;
   } catch (err) {
     // Handle the error appropriately, e.g., log or throw an error
     throw err;
   }
 };
+
 
 //===================== Helper method for validating user's password =================//
 UserSchema.methods.comparePassword = async function comparePassword(

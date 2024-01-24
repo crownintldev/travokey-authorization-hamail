@@ -1,89 +1,120 @@
 const mongoose = require("mongoose");
-const { defineAbilitiesFor } = require("./casl");
-const {
-  handleAsync,
-  Response,
-  lookupStage,
-  aggregationByIds,
-} = require("@tablets/express-mongoose-api");
+const axios = require("axios");
+// const { defineAbilitiesFor } = require("./casl");
+const { createCache } = require("./node-cache");
+const { handleAsync, Response } = require("@tablets/express-mongoose-api");
 const jwt = require("jsonwebtoken");
 
-const modelName = "User";
-const model = mongoose.model(`${modelName}`);
-
 exports.requireSignin = handleAsync(async (req, res, next) => {
+  const userCache = createCache("userCache");
   const token = req.cookies.jwt;
   const verify = jwt.verify(token, process.env.JWT_SECRET);
-
-  const user = await model
-    .findOne({ _id: verify._id })
-    .populate("roles")
-    .populate("permissions")
-    .populate("branches");
-
+  if (!verify) {
+    return Response(res, 401, "Unauthorized");
+  }
+  // caching
+  // if (userCache.has(token)) {
+  //   req.user = userCache.get(token);
+  //   return next();
+  // }
+  const response = await axios.post(
+    `${process.env.AUTHAPI}/auth/getUserFromToken`,
+    { token }
+  );
+  const user = response?.data;
   if (!user) {
     return Response(res, 401, "Unauthorized");
   }
+  console.log(user)
+  // Cache the user data for a short period
+  userCache.set(token, user);
+  setTimeout(() => userCache.delete(token), 600000);
+
   req.user = user;
   next();
-}, modelName);
+}, "User");
 
-exports.caslAbility = handleAsync(async (req, res, next) => {
+exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
   const user = req.user;
-  if (
-    user.permissions &&
-    user.permissions.length > 0 &&
-    user.roles &&
-    user.roles.length > 0
-  ) {
-    // Define abilities for the user
-    user.abilities = defineAbilitiesFor(user);
-  } else {
-    return Response(
-      res,
-      401,
-      "You do not have any permission and role assigned"
-    );
-  }
-  next();
-}, modelName);
-
-exports.appCheckPost = (appName, collectionName) => (req, res, next) => {
-  const user = req.user;
-  let permissions = user.permissions.map((item) => item.name);
-
-  if (!permissions.includes(appName)) {
+  // Check permissions
+  let userPermissions = user.appPermissions || [];
+  if (!userPermissions.includes(appName)) {
     return Response(res, 401, "You do not have Permission of this App");
   }
-  // check roles
+  // Check roles
   if (collectionName) {
+    if (!user.roles) {
+      return Response(res, 401, "You do not have Roles of this App");
+    }
     const roles = user.roles.map((item) => item.name);
-    if (roles.includes("manage-all")) {
-      next();
-    } else {
+    if (!roles.includes("manage-all")) {
       const requiredRoles = [
         `${collectionName}-create`,
         `${collectionName}-delete`,
         `${collectionName}-post`,
         `${collectionName}-read`,
       ];
-      if (requiredRoles.some((role) => roles.includes(role))) {
-        next();
-      } else {
+      if (!requiredRoles.some((role) => roles.includes(role))) {
         return Response(res, 401, "You do not have Roles of this App");
       }
     }
-  } else {
+  }
+  // Check branch if required
+  else {
     next();
   }
 };
-exports.sendParams = (fn, params) => (req, res, next) =>
-  fn(req, res, next, params);
 
-exports.checkPermissions = (action, resource) => (req, res, next) => {
-  const user = req.user;
-  if (!user.abilities.can(action, resource)) {
-    return Response(res, 403, "Forbidden");
+exports.branchCheckPost = async (req, res) => {
+  const branchCache = createCache("branchCache");
+  const branchId = user.branch._id;
+  if (!branchId || user.branch.status !== "active") {
+    return Response(res, 402, "Your branch is not Active");
   }
-  next();
+
+  if (branchCache.has(branchId)) {
+    return next();
+  }
+
+  try {
+    const response = await axios.get(
+      `${process.env.AUTHAPI}/branch/checkBranchExist/${branchId}`
+    );
+
+    if (response.data) {
+      branchCache.set(branchId, response.data);
+      setTimeout(() => branchCache.delete(branchId), 600000);
+      return next();
+    } else {
+      return Response(res, 402, "Branch 500 Error");
+    }
+  } catch (error) {
+    return Response(res, 500, "Error checking branch status");
+  }
 };
+// exports.caslAbility = handleAsync(async (req, res, next) => {
+//   const user = req.user;
+//   if (
+//     user.permissions &&
+//     user.permissions.length > 0 &&
+//     user.roles &&
+//     user.roles.length > 0
+//   ) {
+//     // Define abilities for the user
+//     user.abilities = defineAbilitiesFor(user);
+//   } else {
+//     return Response(
+//       res,
+//       401,
+//       "You do not have any permission and role assigned"
+//     );
+//   }
+//   next();
+// }, modelName);
+// exports.checkPermissions = (action, resource) => (req, res, next) => {
+//   const user = req.user;
+//   if (!user.abilities.can(action, resource)) {
+//     return Response(res, 403, "Forbidden");
+//   }
+//   next();
+// };

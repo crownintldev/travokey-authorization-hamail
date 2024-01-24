@@ -4,26 +4,78 @@ const {
   constants,
   createApi,
   updateApi,
+  updateManyRecords,
+  listCommonAggregationFilterize,
+  listAggregation,
+  createAggregationPipeline,
   aggregationByIds,
   Response,
   lookupStage,
   lookupUnwindStage,
+  createCache,
 } = require("@tablets/express-mongoose-api");
+
+const { hashing } = require("../models/user");
 
 const modelName = "User";
 const model = mongoose.model(`${modelName}`);
 
 exports.update = handleAsync(async (req, res) => {
-  const user = req.user;
+  const userId = req.user._id;
   const data = req.body;
-  let { password } = data;
+  let { password, roles, appPermissions, status } = data;
+  const user = await model.findById(userId);
+  // if (branch) {
+  //   data.branch = user.branch;
+  // }
+  if (roles) {
+    data.roles = user.roles;
+  }
+  if (appPermissions) {
+    data.appPermissions = user.appPermissions;
+  }
+  if (status) {
+    data.status = user.status;
+  }
   if (password) {
-    await user.hashing();
+    await model.hashing(data);
   }
   await user.generateAuthToken(req);
   Object.assign(user, data);
   const updateUser = await user.save();
+  const response = await aggregationByIds({
+    model,
+    ids: [updateUser._id],
+    customParams,
+  });
+  return Response(res, 200, `${modelName} Update Successfully`, response);
+}, modelName);
 
+exports.list = handleAsync(async (req, res) => {
+  const userListCache = createCache("userListCache");
+  // caching
+  if (userListCache.has("list")) {
+    const { data, total } = userListCache.get("list");
+    return Response(res, 200, "ok", data, total);
+  }
+  const { data, total } = await listAggregation(
+    req,
+    res,
+    model,
+    createAggregationPipeline,
+    customParams
+  );
+  userListCache.set("list", { data, total });
+  setTimeout(() => userListCache.delete("list"), 70000); //5m
+
+  Response(res, 200, "ok", data, total);
+}, modelName);
+
+exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
+  const user = req.user;
+  const data = req.body;
+  let { ids, branch, roles, permissions, status } = data;
+  updateManyRecords({ ids, model, data });
   const response = await aggregationByIds({
     model,
     ids: [updateUser._id],
@@ -35,8 +87,7 @@ exports.update = handleAsync(async (req, res) => {
 // for list aggregation pipeline
 const lookup = [
   lookupStage("roles", "roles", "_id", "roles"),
-  lookupStage("permissions", "permissions", "_id", "permissions"),
-  lookupStage("branches", "branches", "_id", "branches"),
+  lookupUnwindStage("branches", "branch", "_id", "branch"),
 ];
 const customParams = {
   lookup,
@@ -49,9 +100,9 @@ const customParams = {
     gender: 1,
     status: 1,
     roles: 1,
-    tokens:1,
+    tokens: 1,
     permissions: 1,
-    branches: 1,
+    branch: 1,
     createdAt: 1,
     updatedAt: 1,
   },

@@ -16,9 +16,21 @@ const model = mongoose.model(`${modelName}`);
 
 exports.signup = handleAsync(async (req, res) => {
   const data = req.body;
-  
+  let { password,roles, permissions, status } = data;
+  if (roles) {
+    data.roles = user.roles;
+  }
+  if (permissions) {
+    data.permissions = user.permissions;
+  }
+  if (status) {
+    data.status = user.status;
+  }
+  if(password){
+    await model.hashing(data);
+  }
   const api = new model(data);
-  await api.hashing();
+ 
   await api.generateAuthToken(req);
   const signUser = await api.save();
   const response =  await aggregationByIds({model,ids:[signUser._id],customParams})
@@ -70,6 +82,27 @@ exports.logoutalldevices = handleAsync(async (req, res) => {
 
   return Response(res, 200, "Logout successful");
 }, modelName);
+
+// In your main app
+exports.getUserFromToken=async(req,res)=>{
+   try {
+    const token = req.body.token;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await model
+      .findOne({ _id: decoded._id })
+      .populate("roles")
+      .populate("branch");
+
+    if (!user) {
+      return Response(res,401,"unauthorized");
+    }
+
+    res.json(user);
+  } catch (error) {
+    return Response(res,401,"Invalid Token");
+  }
+};
+
 
 exports.test = (req, res) => {
   const user = req.user;
