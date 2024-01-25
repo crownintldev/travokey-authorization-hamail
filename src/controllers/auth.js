@@ -31,8 +31,8 @@ exports.signup = handleAsync(async (req, res) => {
   }
   const api = new model(data);
 
-  const token = await api.generateAuthToken(req,res);
-  
+  const token = await api.generateAuthToken(req, res);
+
   const signUser = await api.save();
   const response = await aggregationByIds({
     model,
@@ -40,6 +40,19 @@ exports.signup = handleAsync(async (req, res) => {
     customParams,
   });
   return Response(res, 200, `${modelName} Create Successfully`, response);
+}, modelName);
+
+exports.me = handleAsync(async (req, res) => {
+  const token = req.header("authorization");
+  const user = req.user;
+  const response = await aggregationByIds({
+    model,
+    ids: [user._id],
+    customParams,
+  });
+  return Response(res, 201, constants.USER_LOGIN_SUCCESS, response[0], 1, {
+    accessToken: token,
+  });
 }, modelName);
 
 exports.signin = handleAsync(async (req, res, next) => {
@@ -52,7 +65,7 @@ exports.signin = handleAsync(async (req, res, next) => {
       if (err) {
         return Response(res, 500, "Internal Server Error");
       }
-      const token = await user.generateAuthToken(req,res);
+      const accessToken = await user.generateAuthToken(req, res);
 
       const signUser = await user.save();
       const response = await aggregationByIds({
@@ -60,7 +73,9 @@ exports.signin = handleAsync(async (req, res, next) => {
         ids: [signUser._id],
         customParams,
       });
-      return Response(res, 201, constants.USER_LOGIN_SUCCESS, response);
+      return Response(res, 201, constants.USER_LOGIN_SUCCESS, response[0], 1, {
+        accessToken,
+      });
     });
   })(req, res, next);
 }, modelName);
@@ -114,7 +129,4 @@ exports.test = (req, res) => {
   //   return Response(res, 403, "Forbidden");
   // }
   return Response(res, 200, "Test OK");
-};
-exports.me = (req, res) => {
-  return Response(res, 200, "Test Me OK");
 };

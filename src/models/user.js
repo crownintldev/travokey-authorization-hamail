@@ -167,6 +167,8 @@ UserSchema.methods.generateAuthToken = async function (req,res) {
     res.cookie("jwt", token, {
       expires: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000),
       httpOnly: true,
+      // secure: true, // Recommended for production (requires HTTPS)
+      // sameSite: 'lax' // Adjust according to your needs
     });
     return token;
   } catch (error) {

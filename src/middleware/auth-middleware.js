@@ -1,4 +1,3 @@
-const mongoose = require("mongoose");
 const axios = require("axios");
 // const { defineAbilitiesFor } = require("./casl");
 const { createCache } = require("./node-cache");
@@ -7,7 +6,8 @@ const jwt = require("jsonwebtoken");
 
 exports.requireSignin = handleAsync(async (req, res, next) => {
   const userCache = createCache("userCache");
-  const token = req.cookies.jwt;
+  // const token = req.cookies.jwt;
+  const token = req.header("authorization");
   const verify = jwt.verify(token, process.env.JWT_SECRET);
   if (!verify) {
     return Response(res, 401, "Unauthorized");
