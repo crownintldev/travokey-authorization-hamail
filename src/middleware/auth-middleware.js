@@ -47,15 +47,19 @@ exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
     }
     const roles = user.roles.map((item) => item.name);
     if (!roles.includes("manage-all")) {
-      const requiredRoles = [
-        `${collectionName}-create`,
-        `${collectionName}-delete`,
-        `${collectionName}-post`,
-        `${collectionName}-read`,
-      ];
-      if (!requiredRoles.some((role) => roles.includes(role))) {
+      // const requiredRoles = [
+      //   `${collectionName}-create`,
+      //   `${collectionName}-delete`,
+      //   `${collectionName}-post`,
+      //   `${collectionName}-read`,
+      // ];
+        // if (!requiredRoles.some((role) => roles.includes(role))) {
+      //   return Response(res, 401, "You do not have Roles of this App");
+      // }
+      if(roles.include(collectionName)){
         return Response(res, 401, "You do not have Roles of this App");
       }
+    
       else{
         next()
       }

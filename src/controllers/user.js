@@ -83,18 +83,15 @@ const isArrays = (res, data, next) => {
 
 exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
   const user = req.user;
-  const { ids, branch, roles, permissions, status } = req.body;
-  const data = { branch, roles, permissions, status };
+  const { ids, branch, roles, appPermissions, status } = req.body;
+  const data = { branch, roles, appPermissions, status };
+  console.log(data);
   if (!ids || !ids.length === 0) {
     IsArray(ids, res);
   }
-  updateManyRecords({ ids, model, data });
-  const response = await aggregationByIds({
-    model,
-    ids: [updateUser._id],
-    customParams,
-  });
-  if (response) {
+  const result = await model.updateMany({ _id: { $in: ids } }, data);
+  
+  if (result) {
     return Response(res, 200, `${modelName} Update Successfully`);
   }
 }, modelName);
