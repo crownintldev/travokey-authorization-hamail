@@ -13,10 +13,10 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
     return Response(res, 401, "Unauthorized");
   }
   // caching
-  // if (userCache.has(token)) {
-  //   req.user = userCache.get(token);
-  //   return next();
-  // }
+  if (userCache.has(token)) {
+    req.user = userCache.get(token);
+    return next();
+  }
   const response = await axios.post(
     `${process.env.AUTHAPI}/auth/getUserFromToken`,
     { token }
@@ -25,7 +25,6 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
   if (!user) {
     return Response(res, 401, "Unauthorized");
   }
-  console.log(user)
   // Cache the user data for a short period
   userCache.set(token, user);
   setTimeout(() => userCache.delete(token), 600000);
@@ -37,7 +36,7 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
 exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
   const user = req.user;
   // Check permissions
-  let userPermissions = user.appPermissions || [];
+  let userPermissions = user.appPermissions ?? [];
   if (!userPermissions.includes(appName)) {
     return Response(res, 401, "You do not have Permission of this App");
   }
@@ -57,6 +56,12 @@ exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
       if (!requiredRoles.some((role) => roles.includes(role))) {
         return Response(res, 401, "You do not have Roles of this App");
       }
+      else{
+        next()
+      }
+    }
+    else if(roles.includes("manage-all")){
+      next()
     }
   }
   // Check branch if required

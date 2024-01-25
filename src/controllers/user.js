@@ -12,6 +12,7 @@ const {
   Response,
   lookupStage,
   lookupUnwindStage,
+  IsArray,
   createCache,
 } = require("@tablets/express-mongoose-api");
 
@@ -40,7 +41,7 @@ exports.update = handleAsync(async (req, res) => {
   if (password) {
     await model.hashing(data);
   }
-  await user.generateAuthToken(req);
+  await user.generateAuthToken(req, res);
   Object.assign(user, data);
   const updateUser = await user.save();
   const response = await aggregationByIds({
@@ -71,17 +72,31 @@ exports.list = handleAsync(async (req, res) => {
   Response(res, 200, "ok", data, total);
 }, modelName);
 
+const isArrays = (res, data, next) => {
+  if (!data && res) {
+    return res.send("error");
+  }
+  // if (!data || !Array.isArray(data) || data.length === 0) {
+  //   return Response(res, 400, "Not Found Ids");
+  // }
+};
+
 exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
   const user = req.user;
-  const data = req.body;
-  let { ids, branch, roles, permissions, status } = data;
+  const { ids, branch, roles, permissions, status } = req.body;
+  const data = { branch, roles, permissions, status };
+  if (!ids || !ids.length === 0) {
+    IsArray(ids, res);
+  }
   updateManyRecords({ ids, model, data });
   const response = await aggregationByIds({
     model,
     ids: [updateUser._id],
     customParams,
   });
-  return Response(res, 200, `${modelName} Update Successfully`, response);
+  if (response) {
+    return Response(res, 200, `${modelName} Update Successfully`);
+  }
 }, modelName);
 
 // for list aggregation pipeline
@@ -101,7 +116,7 @@ const customParams = {
     status: 1,
     roles: 1,
     tokens: 1,
-    permissions: 1,
+    appPermissions: 1,
     branch: 1,
     createdAt: 1,
     updatedAt: 1,

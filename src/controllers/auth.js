@@ -6,7 +6,7 @@ const {
   aggregationByIds,
   Response,
 } = require("@tablets/express-mongoose-api");
-const {customParams} = require("./user")
+const { customParams } = require("./user");
 const { expressjwt: expressJwt } = require("express-jwt"); // for authorization
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
@@ -16,7 +16,7 @@ const model = mongoose.model(`${modelName}`);
 
 exports.signup = handleAsync(async (req, res) => {
   const data = req.body;
-  let { password,roles, permissions, status } = data;
+  let { password, roles, permissions, status } = data;
   if (roles) {
     data.roles = user.roles;
   }
@@ -26,14 +26,19 @@ exports.signup = handleAsync(async (req, res) => {
   if (status) {
     data.status = user.status;
   }
-  if(password){
+  if (password) {
     await model.hashing(data);
   }
   const api = new model(data);
- 
-  await api.generateAuthToken(req);
+
+  const token = await api.generateAuthToken(req,res);
+  
   const signUser = await api.save();
-  const response =  await aggregationByIds({model,ids:[signUser._id],customParams})
+  const response = await aggregationByIds({
+    model,
+    ids: [signUser._id],
+    customParams,
+  });
   return Response(res, 200, `${modelName} Create Successfully`, response);
 }, modelName);
 
@@ -47,14 +52,14 @@ exports.signin = handleAsync(async (req, res, next) => {
       if (err) {
         return Response(res, 500, "Internal Server Error");
       }
-      const token = await user.generateAuthToken(req);
-      res.cookie("jwt", token, {
-        expires: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000),
-        httpOnly: true,
-      });
+      const token = await user.generateAuthToken(req,res);
 
       const signUser = await user.save();
-     const response =  await aggregationByIds({model,ids:[signUser._id],customParams})
+      const response = await aggregationByIds({
+        model,
+        ids: [signUser._id],
+        customParams,
+      });
       return Response(res, 201, constants.USER_LOGIN_SUCCESS, response);
     });
   })(req, res, next);
@@ -84,25 +89,24 @@ exports.logoutalldevices = handleAsync(async (req, res) => {
 }, modelName);
 
 // In your main app
-exports.getUserFromToken=async(req,res)=>{
-   try {
+exports.getUserFromToken = async (req, res) => {
+  try {
     const token = req.body.token;
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await model
-      .findOne({ _id: decoded._id })
+      .findOne({ _id: decoded._id, "tokens.token": { $in: token } })
       .populate("roles")
       .populate("branch");
 
     if (!user) {
-      return Response(res,401,"unauthorized");
+      return Response(res, 401, "unauthorized");
     }
 
     res.json(user);
   } catch (error) {
-    return Response(res,401,"Invalid Token");
+    return Response(res, 401, "Invalid Token");
   }
 };
-
 
 exports.test = (req, res) => {
   const user = req.user;
@@ -114,6 +118,3 @@ exports.test = (req, res) => {
 exports.me = (req, res) => {
   return Response(res, 200, "Test Me OK");
 };
-
-
-

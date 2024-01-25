@@ -13,16 +13,16 @@ router.put(
   // appCheckPost("account","user"),
   update
 );
-// router.put(
-//   "/user/editUserbyAdministrator",
-//   requireSignin,
-//   appCheckPost(["account"],"user"),
-//   editUserbyAdministrator
-// );
+router.put(
+  "/user/editUserbyAdministrator",
+  requireSignin,
+  appCheckPost("administrator","user"),
+  editUserbyAdministrator
+);
 router.get(
   "/user/list",
   requireSignin,
-  appCheckPost(["account"], "user"),
+  appCheckPost("administrator", "user"),
   list
 );
 

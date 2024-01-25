@@ -70,9 +70,9 @@ const UserSchema = new mongoose.Schema(
     ],
     roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role" }],
     // permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
-    appPermissions:{
+    appPermissions: {
       type: [String],
-      enum: ["administrator","account"]
+      enum: ["administrator", "account"],
     },
     // "evisa","flight","hotel booking"
     branch: { type: mongoose.Schema.Types.ObjectId, ref: "Branch" },
@@ -132,7 +132,6 @@ UserSchema.statics.hashing = async function (data) {
   }
 };
 
-
 //===================== Helper method for validating user's password =================//
 UserSchema.methods.comparePassword = async function comparePassword(
   plaintextPassword
@@ -146,9 +145,9 @@ UserSchema.methods.comparePassword = async function comparePassword(
   }
 };
 
-UserSchema.methods.generateAuthToken = async function (req) {
+UserSchema.methods.generateAuthToken = async function (req,res) {
   let user = this;
-  const device = req.headers['user-agent'] + req.ip;
+  const device = req.headers["user-agent"] + req.ip;
   try {
     let token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.authTokenExpiresIn || "9d",
@@ -164,7 +163,11 @@ UserSchema.methods.generateAuthToken = async function (req) {
       // Add new token
       user.tokens.push({ token, device });
     }
-
+    // set jwt cookie
+    res.cookie("jwt", token, {
+      expires: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000),
+      httpOnly: true,
+    });
     return token;
   } catch (error) {
     console.log("error on token assign", error);
