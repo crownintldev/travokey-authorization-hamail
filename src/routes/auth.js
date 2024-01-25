@@ -23,7 +23,7 @@ router.post("/auth/logoutall", requireSignin, logoutalldevices);
 router.post(
   "/auth/test",
   requireSignin,
-  appCheckPost("account", "testing"),
+  appCheckPost("account", "testing-create"),
   test
 );
 router.get("/auth/me", requireSignin, me);

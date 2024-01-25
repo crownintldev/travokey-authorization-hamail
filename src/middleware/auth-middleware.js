@@ -56,7 +56,7 @@ exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
         // if (!requiredRoles.some((role) => roles.includes(role))) {
       //   return Response(res, 401, "You do not have Roles of this App");
       // }
-      if(roles.include(collectionName)){
+      if(!roles.includes(collectionName)){
         return Response(res, 401, "You do not have Roles of this App");
       }
     
