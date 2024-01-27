@@ -16,13 +16,13 @@ router.put(
 router.put(
   "/user/editUserbyAdministrator",
   requireSignin,
-  appCheckPost("administrator","user"),
+  appCheckPost("administrator","user-update"),
   editUserbyAdministrator
 );
 router.get(
-  "/user/list",
+  "/user",
   requireSignin,
-  appCheckPost("administrator", "user"),
+  appCheckPost("administrator", "user-list"),
   list
 );
 

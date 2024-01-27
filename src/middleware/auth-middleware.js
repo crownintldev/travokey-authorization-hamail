@@ -35,6 +35,7 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
 
 exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
   const user = req.user;
+  console.log(user.roles)
   // Check permissions
   let userPermissions = user.appPermissions ?? [];
   if (!userPermissions.includes(appName)) {
@@ -42,11 +43,11 @@ exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
   }
   // Check roles
   if (collectionName) {
-    if (!user.roles) {
-      return Response(res, 401, "You do not have Roles of this App");
+    if (!user.roles || !user.roles.list) {
+      return Response(res, 401, "You do not have Roles of this App ---");
     }
-    const roles = user.roles.map((item) => item.name);
-    if (!roles.includes("manage-all")) {
+    const rolesList = user.roles?.list.map((item) => item);
+    if (!rolesList.includes("manage-all")) {
       // const requiredRoles = [
       //   `${collectionName}-create`,
       //   `${collectionName}-delete`,
@@ -56,7 +57,7 @@ exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
         // if (!requiredRoles.some((role) => roles.includes(role))) {
       //   return Response(res, 401, "You do not have Roles of this App");
       // }
-      if(!roles.includes(collectionName)){
+      if(!rolesList.includes(collectionName)){
         return Response(res, 401, "You do not have Roles of this App");
       }
     
@@ -64,7 +65,7 @@ exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
         next()
       }
     }
-    else if(roles.includes("manage-all")){
+    else if(rolesList.includes("manage-all")){
       next()
     }
   }

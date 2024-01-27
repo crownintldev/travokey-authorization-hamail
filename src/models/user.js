@@ -68,7 +68,7 @@ const UserSchema = new mongoose.Schema(
         },
       },
     ],
-    roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role" }],
+    roles: { type: mongoose.Schema.Types.ObjectId, ref: "Role" },
     // permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
     appPermissions: {
       type: [String],

@@ -19,11 +19,7 @@ let model = Role;
 let modelName = model.modelName;
 
 exports.create = handleAsync(async (req, res) => {
-  const { name,permission } = req.body;
-  // req.body destructuring
-  const data = { name,permission };
-
-   const role = await createApi(model, data);
+   const role = await createApi(model, req.body);
   const response =  await aggregationByIds({model,ids:[role._id],customParams})
   return Response(res, 200, "Agent Create Successfully", [response], 1);
 }, modelName);
@@ -43,9 +39,8 @@ exports.list = async (req, res) => {
 };
 
 exports.update = handleAsync(async (req, res) => {
-  const data = req.body;
   const id = req.params.id;
-  const role = await updateApi(model, id, data);
+  const role = await updateApi(model, id, req.body);
   const response =  aggregationByIds({model,ids:[role._id],customParams})
   return Response(res, 200, "ok", [response]);
 }, modelName);
@@ -64,18 +59,13 @@ exports.remove = async (req, res) => {
 
 
 // for list aggregation pipeline
-const lookup = [
-    lookupUnwindStage("permissions", "permission", "_id", "permission"),
-  ];
+
   const customParams = {
-    lookup,
     projectionFields: {
       _id: 1,
-      name: 1,
-      permission: {
-        name: "$permission.name",
-        _id: "$category._id",
-      },
+      title: 1,
+      list:1,
+      chooseApp:1,
       createdAt: 1,
       updatedAt: 1,
     },

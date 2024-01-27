@@ -2,20 +2,33 @@ const mongoose = require("mongoose");
 
 const roleSchema = new mongoose.Schema(
   {
-    name: {
+    title:{
       type: String,
       unique: true,
+      required: [true,"role title is missing"],
+    },
+    list: {
+      type: Array,
       required: true,
     },
-    permission: {
+    chooseApp: {
       type: String,
-      required: true,
+      enum: ["administrator", "account"],
     },
   },
   {
     timestamps: true,
   }
 );
+
+roleSchema.pre("save", function (next) {
+  // Ensure uniqueness at the element level
+  const uniqueValues = new Set(this.list);
+  this.list = Array.from(uniqueValues);
+
+  next();
+});
+
 
 const Role = mongoose.model("Role", roleSchema);
 

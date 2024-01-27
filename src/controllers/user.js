@@ -102,7 +102,7 @@ exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
 
 // for list aggregation pipeline
 const lookup = [
-  lookupStage("roles", "roles", "_id", "roles"),
+  lookupUnwindStage("roles", "roles", "_id", "roles"),
   lookupUnwindStage("branches", "branch", "_id", "branch"),
 ];
 const customParams = {
