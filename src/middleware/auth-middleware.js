@@ -35,7 +35,6 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
 
 exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
   const user = req.user;
-  console.log(user.roles)
   // Check permissions
   let userPermissions = user.appPermissions ?? [];
   if (!userPermissions.includes(appName)) {

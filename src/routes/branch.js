@@ -9,7 +9,7 @@ let model = "branch";
 router.post(`/${model}/create`,create)
 router.put(`/${model}/update/:id`,update)
 router.get(`/${model}/checkBranchExist/:id`,checkBranchExist)
-router.get(`/${model}`,list)
+router.get(`/${model}/:query?`,list)
 router.post(`/${model}/remove`,remove)
 
 module.exports = router;

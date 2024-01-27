@@ -45,12 +45,7 @@ exports.signup = handleAsync(async (req, res) => {
 exports.me = handleAsync(async (req, res) => {
   const token = req.header("authorization");
   const user = req.user;
-  const response = await aggregationByIds({
-    model,
-    ids: [user._id],
-    customParams,
-  });
-  return Response(res, 201, constants.USER_LOGIN_SUCCESS, response[0], 1, {
+  return Response(res, 201, constants.USER_LOGIN_SUCCESS,user, 1, {
     accessToken: token,
   });
 }, modelName);
@@ -68,12 +63,8 @@ exports.signin = handleAsync(async (req, res, next) => {
       const accessToken = await user.generateAuthToken(req, res);
 
       const signUser = await user.save();
-      const response = await aggregationByIds({
-        model,
-        ids: [signUser._id],
-        customParams,
-      });
-      return Response(res, 201, constants.USER_LOGIN_SUCCESS, response[0], 1, {
+     
+      return Response(res, 201, constants.USER_LOGIN_SUCCESS, signUser, 1, {
         accessToken,
       });
     });

@@ -11,9 +11,10 @@ const roleSchema = new mongoose.Schema(
       type: Array,
       required: true,
     },
-    chooseApp: {
-      type: String,
+    appPermissions: {
+      type: [String],
       enum: ["administrator", "account"],
+      required: true,
     },
   },
   {

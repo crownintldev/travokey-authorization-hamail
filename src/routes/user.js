@@ -20,7 +20,7 @@ router.put(
   editUserbyAdministrator
 );
 router.get(
-  "/user",
+  "/user/:query?",
   requireSignin,
   appCheckPost("administrator", "user-list"),
   list
