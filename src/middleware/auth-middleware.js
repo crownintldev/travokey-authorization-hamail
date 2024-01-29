@@ -1,7 +1,11 @@
 const axios = require("axios");
 // const { defineAbilitiesFor } = require("./casl");
-const { createCache } = require("./node-cache");
-const { handleAsync, Response } = require("@tablets/express-mongoose-api");
+// const { createCache } = require("./node-cache");
+const {
+  handleAsync,
+  Response,
+  createCache,
+} = require("@tablets/express-mongoose-api");
 const jwt = require("jsonwebtoken");
 
 exports.requireSignin = handleAsync(async (req, res, next) => {
@@ -33,13 +37,16 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
   next();
 }, "User");
 
-exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
+exports.appCheckPost = (appName) => async (req, res, next) => {
   const user = req.user;
-  // Check permissions
   let userPermissions = user.appPermissions ?? [];
   if (!userPermissions.includes(appName)) {
     return Response(res, 401, "You do not have Permission of this App");
   }
+};
+
+exports.modelCheckPost = (collectionName) => async (req, res, next) => {
+  const user = req.user;
   // Check roles
   if (collectionName) {
     if (!user.roles || !user.roles.list) {
@@ -53,19 +60,16 @@ exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
       //   `${collectionName}-post`,
       //   `${collectionName}-read`,
       // ];
-        // if (!requiredRoles.some((role) => roles.includes(role))) {
+      // if (!requiredRoles.some((role) => roles.includes(role))) {
       //   return Response(res, 401, "You do not have Roles of this App");
       // }
-      if(!rolesList.includes(collectionName)){
+      if (!rolesList.includes(collectionName)) {
         return Response(res, 401, "You do not have Roles of this App");
+      } else {
+        next();
       }
-    
-      else{
-        next()
-      }
-    }
-    else if(rolesList.includes("manage-all")){
-      next()
+    } else if (rolesList.includes("manage-all")) {
+      next();
     }
   }
   // Check branch if required
@@ -73,6 +77,43 @@ exports.appCheckPost = (appName, collectionName) => async (req, res, next) => {
     next();
   }
 };
+exports.appModelCheckPost =
+  (appName, collectionName) => async (req, res, next) => {
+    const user = req.user;
+    let userPermissions = user.appPermissions ?? [];
+    if (!userPermissions.includes(appName)) {
+      return Response(res, 401, "You do not have Permission of this App");
+    }
+    // Check roles
+    if (collectionName) {
+      if (!user.roles || !user.roles.list) {
+        return Response(res, 401, "You do not have Roles of this App ---");
+      }
+      const rolesList = user.roles?.list.map((item) => item);
+      if (!rolesList.includes("manage-all")) {
+        // const requiredRoles = [
+        //   `${collectionName}-create`,
+        //   `${collectionName}-delete`,
+        //   `${collectionName}-post`,
+        //   `${collectionName}-read`,
+        // ];
+        // if (!requiredRoles.some((role) => roles.includes(role))) {
+        //   return Response(res, 401, "You do not have Roles of this App");
+        // }
+        if (!rolesList.includes(collectionName)) {
+          return Response(res, 401, "You do not have Roles of this App");
+        } else {
+          next();
+        }
+      } else if (rolesList.includes("manage-all")) {
+        next();
+      }
+    }
+    // Check branch if required
+    else {
+      next();
+    }
+  };
 
 exports.branchCheckPost = async (req, res) => {
   const branchCache = createCache("branchCache");

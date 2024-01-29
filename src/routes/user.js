@@ -1,28 +1,26 @@
+//@ts-check
 const express = require("express");
 const router = express.Router();
 
 const { update, list,editUserbyAdministrator } = require("../controllers/user");
 const {
   requireSignin,
-  appCheckPost,
+  appModelCheckPost,
 } = require("../middleware/auth-middleware");
 
 router.put(
   "/user/update",
-  requireSignin,
   // appCheckPost("account","user"),
   update
 );
 router.put(
   "/user/editUserbyAdministrator",
-  requireSignin,
-  appCheckPost("administrator","user-update"),
+  appModelCheckPost("administrator"),
   editUserbyAdministrator
 );
 router.get(
   "/user/:query?",
-  requireSignin,
-  appCheckPost("administrator", "user-list"),
+  appModelCheckPost("administrator"),
   list
 );
 
