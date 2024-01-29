@@ -42,6 +42,8 @@ exports.appCheckPost = (appName) => async (req, res, next) => {
   let userPermissions = user.appPermissions ?? [];
   if (!userPermissions.includes(appName)) {
     return Response(res, 401, "You do not have Permission of this App");
+  } else {
+    next();
   }
 };
 
