@@ -11,7 +11,7 @@ var validateEmail = function (email) {
 
 const UserSchema = new mongoose.Schema(
   {
-    userName: {
+    username: {
       type: String,
       lowercase: true,
       required: true,

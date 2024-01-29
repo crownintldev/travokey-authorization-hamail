@@ -84,17 +84,19 @@ const isArrays = (res, data, next) => {
 exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
   const user = req.user;
   const { ids, branch, roles, appPermissions, status } = req.body;
+  if (!user.appPermissions.some(permission => appPermissions.includes(permission))) {
+    return Response(res, 400, "You can't assign permissions that you are not allowed.");
+}
+  if(ids.includes(user._id)){
+    return Response(res,400,"Administrator can't update his own role, Contact Super Admin")
+  }
+
+
   const data = { branch, roles, appPermissions, status };
-  console.log(data);
   if (!ids || !ids.length === 0) {
     IsArray(ids, res);
   }
-  const result = await model.updateMany({ _id: { $in: ids } }, data);
-  // const response = await aggregationByIds({
-  //   model,
-  //   ids: [updateUser._id],
-  //   customParams,
-  // });
+  const result = await model.updateMany({ _id: { $in: ids } },  { $set: data }, );
   if (result) {
     return Response(res, 200, `${modelName} Update Successfully`);
   }
