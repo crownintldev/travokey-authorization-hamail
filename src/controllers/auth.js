@@ -31,7 +31,7 @@ exports.signup = handleAsync(async (req, res) => {
   }
   const api = new model(data);
 
-  const token = await api.generateAuthToken(req, res);
+  const accessToken = await api.generateAuthToken(req, res);
 
   const signUser = await api.save();
   const response = await aggregationByIds({
@@ -39,7 +39,7 @@ exports.signup = handleAsync(async (req, res) => {
     ids: [signUser._id],
     customParams,
   });
-  return Response(res, 200, `${modelName} Create Successfully`, response);
+  return Response(res, 200, `${modelName} Create Successfully`, signUser,1,{accessToken});
 }, modelName);
 
 exports.me = handleAsync(async (req, res) => {

@@ -72,33 +72,43 @@ exports.list = handleAsync(async (req, res) => {
   Response(res, 200, "ok", data, total);
 }, modelName);
 
-const isArrays = (res, data, next) => {
-  if (!data && res) {
-    return res.send("error");
-  }
-  // if (!data || !Array.isArray(data) || data.length === 0) {
-  //   return Response(res, 400, "Not Found Ids");
-  // }
-};
-
 exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
   const user = req.user;
   const { ids, branch, roles, appPermissions, status } = req.body;
-  if (!user.appPermissions.some(permission => appPermissions.includes(permission))) {
-    return Response(res, 400, "You can't assign permissions that you are not allowed.");
-}
-  if(ids.includes(user._id)){
-    return Response(res,400,"Administrator can't update his own role, Contact Super Admin")
+  if (appPermissions) {
+    if (
+      !user.appPermissions.some((permission) =>
+        appPermissions.includes(permission)
+      )
+    ) {
+      return Response(
+        res,
+        400,
+        "You can't assign permissions that you are not allowed."
+      );
+    }
   }
-
+  if (ids.includes(user._id)) {
+    return Response(
+      res,
+      400,
+      "Administrator can't update his own role, Contact Super Admin"
+    );
+  }
 
   const data = { branch, roles, appPermissions, status };
   if (!ids || !ids.length === 0) {
     IsArray(ids, res);
   }
-  const result = await model.updateMany({ _id: { $in: ids } },  { $set: data }, );
+  const result = await model.updateMany({ _id: { $in: ids } }, { $set: data });
+  
   if (result) {
-    return Response(res, 200, `${modelName} Update Successfully`);
+    const response = await aggregationByIds({
+      model,
+      ids: ids,
+      customParams,
+    });
+    return Response(res, 200, `${modelName} Update Successfully`,response);
   }
 }, modelName);
 
@@ -111,7 +121,7 @@ const customParams = {
   lookup,
   projectionFields: {
     _id: 1,
-    userName: 1,
+    username: 1,
     email: 1,
     phoneNumber: 1,
     address: 1,
