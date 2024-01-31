@@ -52,7 +52,7 @@ const UserSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["pending", "active", "block", "deleted", "rejected"],
-      default: "pending",
+      default: "active",
     },
     forgetPasswordAuthToken: {
       type: String,

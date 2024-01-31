@@ -101,14 +101,14 @@ exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
     IsArray(ids, res);
   }
   const result = await model.updateMany({ _id: { $in: ids } }, { $set: data });
-  
+
   if (result) {
     const response = await aggregationByIds({
       model,
       ids: ids,
       customParams,
     });
-    return Response(res, 200, `${modelName} Update Successfully`,response);
+    return Response(res, 200, `${modelName} Update Successfully`, response);
   }
 }, modelName);
 
