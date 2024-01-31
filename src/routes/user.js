@@ -15,11 +15,13 @@ router.put(
 );
 router.put(
   "/user/editUserbyAdministrator",
+  requireSignin,
   appModelCheckPost("administrator"),
   editUserbyAdministrator
 );
 router.get(
   "/user/:query?",
+  requireSignin,
   appModelCheckPost("administrator"),
   list
 );

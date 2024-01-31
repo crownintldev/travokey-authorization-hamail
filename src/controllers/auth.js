@@ -43,7 +43,9 @@ exports.signup = handleAsync(async (req, res) => {
 }, modelName);
 
 exports.me = handleAsync(async (req, res) => {
-  const token = req.header("authorization");
+  // const token = req.header("authorization");
+  const token = req.cookies.jwt;
+  console.log("token me",token);
   const user = req.user;
   return Response(res, 201, constants.USER_LOGIN_SUCCESS,user, 1, {
     accessToken: token,

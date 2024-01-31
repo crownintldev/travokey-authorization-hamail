@@ -14,7 +14,28 @@ connectdb();
 const app = express();
 app.use(logger("dev"));
 
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:4000",
+  "http://localhost:3000",
+  "http://yet-another-origin.com",
+];
+
+app.use(cors({
+  credentials: true,
+  origin: true 
+}));
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     // allow requests with no origin (like mobile apps, curl requests)
+//     if (!origin) return callback(null, true);
+//     if (allowedOrigins.indexOf(origin) === -1) {
+//       var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+//       return callback(new Error(msg), false);
+//     }
+//     return callback(null, true);
+//   },
+//   credentials: true
+// }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -45,10 +66,10 @@ const branch = require("./routes/branch");
 
 //routes
 app.use("/api", auth);
-app.use("/api", requireSignin, user);
-app.use("/api", requireSignin, appCheckPost("administrator"), role);
+app.use("/api", user);
+app.use("/api", appCheckPost("administrator"));
 // app.use("/api", requireSignin,permission);
-app.use("/api", requireSignin, branch);
+app.use("/api", branch);
 
 app.listen(port, () => {
   console.log(

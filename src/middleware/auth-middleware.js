@@ -10,8 +10,8 @@ const jwt = require("jsonwebtoken");
 
 exports.requireSignin = handleAsync(async (req, res, next) => {
   const userCache = createCache("userCache");
-  // const token = req.cookies.jwt;
-  const token = req.header("authorization");
+  const token = req.cookies.jwt;
+  // const token = req.header("authorization");
   const verify = jwt.verify(token, process.env.JWT_SECRET);
   if (!verify) {
     return Response(res, 401, "Unauthorized");
@@ -23,7 +23,7 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
   }
   const response = await axios.post(
     `${process.env.AUTHAPI}/auth/getUserFromToken`,
-    { token }
+    { token}
   );
   const user = response?.data;
   if (!user) {
@@ -130,7 +130,8 @@ exports.branchCheckPost = async (req, res) => {
 
   try {
     const response = await axios.get(
-      `${process.env.AUTHAPI}/branch/checkBranchExist/${branchId}`
+      `${process.env.AUTHAPI}/branch/checkBranchExist/${branchId}`,
+      { token}
     );
 
     if (response.data) {

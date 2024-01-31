@@ -149,7 +149,7 @@ UserSchema.methods.generateAuthToken = async function (req,res) {
   let user = this;
   const device = req.headers["user-agent"] + req.ip;
   try {
-    let token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
+    let accessToken = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.authTokenExpiresIn || "9d",
     });
     // this.tokens = this.tokens.concat({ token });
@@ -158,19 +158,19 @@ UserSchema.methods.generateAuthToken = async function (req,res) {
     let existingTokenIndex = user.tokens.findIndex((t) => t.device === device);
     if (existingTokenIndex !== -1) {
       // Update existing token
-      user.tokens[existingTokenIndex].token = token;
+      user.tokens[existingTokenIndex].token = accessToken;
     } else {
       // Add new token
-      user.tokens.push({ token, device });
+      user.tokens.push({ token:accessToken, device });
     }
     // set jwt cookie
-    res.cookie("jwt", token, {
+    res.cookie("jwt", accessToken, {
       expires: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000),
       httpOnly: true,
       // secure: true, // Recommended for production (requires HTTPS)
       // sameSite: 'lax' // Adjust according to your needs
     });
-    return token;
+    return accessToken;
   } catch (error) {
     console.log("error on token assign", error);
     // res.send("error on token assign", error);
