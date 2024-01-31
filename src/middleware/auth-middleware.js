@@ -26,6 +26,9 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
     { token}
   );
   const user = response?.data;
+  if(user.status !== "active"){
+    return Response(res,400,"Your Account is not Active! *Contact Administrator*")
+  }
   if (!user) {
     return Response(res, 401, "Unauthorized");
   }
