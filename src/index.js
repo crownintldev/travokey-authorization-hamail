@@ -67,7 +67,7 @@ const branch = require("./routes/branch");
 //routes
 app.use("/api", auth);
 app.use("/api", user);
-app.use("/api", appCheckPost("administrator"));
+app.use("/api",role);
 // app.use("/api", requireSignin,permission);
 app.use("/api", branch);
 

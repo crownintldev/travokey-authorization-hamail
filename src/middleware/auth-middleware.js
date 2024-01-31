@@ -26,11 +26,12 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
     { token}
   );
   const user = response?.data;
-  if(user.status !== "active"){
-    return Response(res,400,"Your Account is not Active! *Contact Administrator*")
-  }
+
   if (!user) {
     return Response(res, 401, "Unauthorized");
+  }
+  if(!user.status || user?.status !== "active"){
+    return Response(res,400,"Your Account is not Active! *Contact Administrator*")
   }
   // Cache the user data for a short period
   userCache.set(token, user);
@@ -42,7 +43,7 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
 
 exports.appCheckPost = (appName) => async (req, res, next) => {
   const user = req.user;
-  let userPermissions = user.appPermissions ?? [];
+  let userPermissions = user?.appPermissions ?? [];
   if (!userPermissions.includes(appName)) {
     return Response(res, 401, "You do not have Permission of this App");
   } else {
