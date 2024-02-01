@@ -44,7 +44,12 @@ exports.signup = handleAsync(async (req, res) => {
 
 exports.me = handleAsync(async (req, res) => {
   // const token = req.header("authorization");
-  const token = req.cookies.jwt;
+  let token;
+  if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  } else if (req.header("authorization")) {
+    token = req.header("authorization").split(" ")[1];
+  }
   const user = req.user;
   return Response(res, 201, constants.USER_LOGIN_SUCCESS,user, 1, {
     accessToken: token,
