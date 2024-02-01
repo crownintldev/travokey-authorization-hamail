@@ -10,8 +10,12 @@ const jwt = require("jsonwebtoken");
 
 exports.requireSignin = handleAsync(async (req, res, next) => {
   const userCache = createCache("userCache");
-  const token = req.cookies.jwt;
-  // const token = req.header("authorization");
+  let token;
+  if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  } else if (req.header("authorization")) {
+    token = req.header("authorization").split(" ")[1];
+  }
   const verify = jwt.verify(token, process.env.JWT_SECRET);
   if (!verify) {
     return Response(res, 401, "Unauthorized");
@@ -23,15 +27,19 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
   }
   const response = await axios.post(
     `${process.env.AUTHAPI}/auth/getUserFromToken`,
-    { token}
+    { token }
   );
   const user = response?.data;
 
   if (!user) {
     return Response(res, 401, "Unauthorized");
   }
-  if(!user.status || user?.status !== "active"){
-    return Response(res,400,"Your Account is not Active! *Contact Administrator*")
+  if (!user.status || user?.status !== "active") {
+    return Response(
+      res,
+      400,
+      "Your Account is not Active! *Contact Administrator*"
+    );
   }
   // Cache the user data for a short period
   userCache.set(token, user);
@@ -135,7 +143,7 @@ exports.branchCheckPost = async (req, res) => {
   try {
     const response = await axios.get(
       `${process.env.AUTHAPI}/branch/checkBranchExist/${branchId}`,
-      { token}
+      { token }
     );
 
     if (response.data) {
