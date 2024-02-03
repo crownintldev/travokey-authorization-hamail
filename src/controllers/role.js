@@ -40,7 +40,7 @@ exports.create = handleAsync(async (req, res) => {
     ids: [role._id],
     customParams,
   });
-  return Response(res, 200, "Agent Create Successfully", [response], 1);
+  return Response(res, 200, "Agent Create Successfully", response, 1);
 }, modelName);
 
 exports.read = async (req, res) => {
@@ -66,12 +66,12 @@ exports.list = async (req, res) => {
 exports.update = handleAsync(async (req, res) => {
   const id = req.params.id;
   const role = await updateApi(model, id, req.body);
-  const response = aggregationByIds({ model, ids: [role._id], customParams });
-  return Response(res, 200, "ok", [response]);
+  const response = await aggregationByIds({ model, ids: [role._id], customParams });
+  return Response(res, 200, "ok", response);
 }, modelName);
 
 exports.remove = async (req, res) => {
-  removeMany(req, res, model);
+  await removeMany(req, res, model);
 };
 
 // exports.softRemove = async (req, res) => {
