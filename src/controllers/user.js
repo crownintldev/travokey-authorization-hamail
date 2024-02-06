@@ -53,11 +53,13 @@ exports.update = handleAsync(async (req, res) => {
 }, modelName);
 
 exports.list = handleAsync(async (req, res) => {
+  const userId = req.user._id;
   const userListCache = createCache("userListCache");
   // caching
   if (userListCache.has("list")) {
-    const { data, total } = userListCache.get("list");
-    return Response(res, 200, "ok", data, total);
+    const { userData, total } = userListCache.get("list");
+    
+    return Response(res, 200, "ok", userData, total);
   }
   const { data, total } = await listAggregation(
     req,
@@ -66,10 +68,11 @@ exports.list = handleAsync(async (req, res) => {
     createAggregationPipeline,
     customParams
   );
-  userListCache.set("list", { data, total });
+  const userData = data.filter((item) => item._id.toString() !== userId.toString());
+  userListCache.set("list", { userData, total });
   setTimeout(() => userListCache.delete("list"), 70000); //5m
 
-  Response(res, 200, "ok", data, total);
+  Response(res, 200, "ok", userData, total);
 }, modelName);
 
 exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
@@ -128,7 +131,7 @@ const customParams = {
     gender: 1,
     status: 1,
     roles: 1,
-    tokens: 1,
+    // tokens: 1,
     appPermissions: 1,
     branch: 1,
     createdAt: 1,

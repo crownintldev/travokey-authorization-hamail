@@ -82,7 +82,7 @@ exports.modelCheckPost = (collectionName) => async (req, res, next) => {
       } else {
         next();
       }
-    } else if (rolesList.includes("manage-all")) {
+    } else if (rolesList.title==="administrator") {
       next();
     }
   }
