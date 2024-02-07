@@ -129,34 +129,35 @@ exports.appModelCheckPost =
     }
   };
 
-exports.branchCheckPost = async (req, res) => {
-  const branchCache = createCache("branchCache");
-  const branchId = user.branch._id;
-  if (!branchId || user.branch.status !== "active") {
-    return Response(res, 402, "Your branch is not Active");
-  }
+// exports.branchCheckPost = async (req, res) => {
+//   const branchCache = createCache("branchCache");
+//   const branchId = user.branch._id;
+//   if (!branchId || user.branch.status !== "active") {
+//     return Response(res, 402, "Your branch is not Active");
+//   }
 
-  if (branchCache.has(branchId)) {
-    return next();
-  }
+//   if (branchCache.has(branchId)) {
+//     return next();
+//   }
 
-  try {
-    const response = await axios.get(
-      `${process.env.AUTHAPI}/branch/checkBranchExist/${branchId}`,
-      { token }
-    );
+//   try {
+//     const response = await axios.get(
+//       `${process.env.AUTHAPI}/branch/checkBranchExist/${branchId}`,
+//       { token }
+//     );
 
-    if (response.data) {
-      branchCache.set(branchId, response.data);
-      setTimeout(() => branchCache.delete(branchId), 600000);
-      return next();
-    } else {
-      return Response(res, 402, "Branch 500 Error");
-    }
-  } catch (error) {
-    return Response(res, 500, "Error checking branch status");
-  }
-};
+//     if (response.data) {
+//       branchCache.set(branchId, response.data);
+//       setTimeout(() => branchCache.delete(branchId), 600000);
+//       return next();
+//     } else {
+//       return Response(res, 402, "Branch 500 Error");
+//     }
+//   } catch (error) {
+//     return Response(res, 500, "Error checking branch status");
+//   }
+// };
+
 // exports.caslAbility = handleAsync(async (req, res, next) => {
 //   const user = req.user;
 //   if (

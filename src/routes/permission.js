@@ -2,9 +2,14 @@
 const express = require("express");
 const router = express.Router();
 
-const {create,update,remove,read,list} = require("../controllers/permission")
-const {requireSignin} = require("../middleware/auth-middleware")
+const {
+    requireSignin,
+    appCheckPost,
+  } = require("../middleware/auth-middleware");
 
+const {create,update,remove,read,list} = require("../controllers/permission")
+
+router.use("/role", requireSignin, appCheckPost("administrator"));
 router.post("/permission/create",create)
 router.put("/permission/update/:id",update)
 router.get("/permission",list)

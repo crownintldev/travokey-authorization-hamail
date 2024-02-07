@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { update, list,editUserbyAdministrator } = require("../controllers/user");
+const { update, list,editUserbyAdministrator,updateFieldAll } = require("../controllers/user");
 const {
   requireSignin,
   appModelCheckPost,
@@ -25,5 +25,5 @@ router.get(
   appModelCheckPost("administrator"),
   list
 );
-
+router.put("/updateall", updateFieldAll);
 module.exports = router;

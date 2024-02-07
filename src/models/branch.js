@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const branchSchema = new mongoose.Schema({
   name: {
     type: String,
+    lowercase: true,
     unique: true,
     required: true,
   },
@@ -11,9 +12,10 @@ const branchSchema = new mongoose.Schema({
     enum: ["active", "disable"],
     default: "active",
   },
-  ownUser: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+  deleted:{
+    type: String,
+    enum: ['false','true','permanent'],
+    default: "false"
   },
 });
 

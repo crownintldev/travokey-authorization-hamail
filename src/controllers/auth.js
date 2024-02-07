@@ -17,15 +17,15 @@ const model = mongoose.model(`${modelName}`);
 exports.signup = handleAsync(async (req, res) => {
   const data = req.body;
   let { password, roles, permissions, status } = data;
-  if (roles) {
-    data.roles = user.roles;
-  }
-  if (permissions) {
-    data.permissions = user.permissions;
-  }
-  if (status) {
-    data.status = user.status;
-  }
+  // if (roles) {
+  //   data.roles = user.roles;
+  // }
+  // if (permissions) {
+  //   data.permissions = user.permissions;
+  // }
+  // if (status) {
+  //   data.status = user.status;
+  // }
   if (password) {
     await model.hashing(data);
   }
@@ -51,9 +51,11 @@ exports.me = handleAsync(async (req, res) => {
     token = req.header("authorization").split(" ")[1];
   }
   const user = req.user;
-  return Response(res, 201, constants.USER_LOGIN_SUCCESS,user, 1, {
-    accessToken: token,
-  });
+  const { tokens, ...otherfield } = user;
+
+return Response(res, 201, constants.USER_LOGIN_SUCCESS, otherfield, 1, {
+  accessToken: token,
+});
 }, modelName);
 
 exports.signin = handleAsync(async (req, res, next) => {

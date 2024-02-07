@@ -16,6 +16,11 @@ const roleSchema = new mongoose.Schema(
       enum: ["administrator", "account"],
       required: true,
     },
+    deleted:{
+      type: String,
+      enum: ['false','true','permanent'],
+      default: "false"
+    },
   },
   {
     timestamps: true,

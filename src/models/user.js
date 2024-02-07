@@ -76,6 +76,11 @@ const UserSchema = new mongoose.Schema(
     },
     // "evisa","flight","hotel booking"
     branch: { type: mongoose.Schema.Types.ObjectId, ref: "Branch" },
+    deleted:{
+      type: String,
+      enum: ['false','true','permanent'],
+      default: "false"
+    },
     // accountSetupStatus: {
     //   type: String,
     //   enum: ["pending", "completed"],
