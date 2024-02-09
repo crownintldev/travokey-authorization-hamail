@@ -110,12 +110,12 @@ exports.getUserFromToken = async (req, res) => {
     const user = await model
       .findOne({ _id: decoded._id, "tokens.token": { $in: token } })
       .populate("roles")
-      .populate("branch");
+      .populate("branch")
+      .select("-tokens")
 
     if (!user) {
       return Response(res, 401, "unauthorized");
     }
-
     res.json(user);
   } catch (error) {
     return Response(res, 401, "Invalid Token");

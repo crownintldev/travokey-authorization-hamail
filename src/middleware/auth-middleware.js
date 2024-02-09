@@ -34,11 +34,20 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
   if (!user) {
     return Response(res, 401, "Unauthorized");
   }
+
   if (!user.status || user?.status !== "active") {
     return Response(
       res,
       400,
       "Your Account is not Active! *Contact Administrator*"
+    );
+  }
+
+  if (!user.branch || user.branch.status !== "active") {
+    return Response(
+      res,
+      410,
+      "Branch is Not Active or not Assigned, *Contact Administrator*"
     );
   }
   // Cache the user data for a short period
@@ -82,7 +91,7 @@ exports.modelCheckPost = (collectionName) => async (req, res, next) => {
       } else {
         next();
       }
-    } else if (rolesList.title==="administrator") {
+    } else if (rolesList.title === "administrator") {
       next();
     }
   }
@@ -92,7 +101,7 @@ exports.modelCheckPost = (collectionName) => async (req, res, next) => {
   }
 };
 exports.appModelCheckPost =
-  (appName, collectionName) => async (req, res, next) => {
+(appName, collectionName) => async (req, res, next) => {
     const user = req.user;
     let userPermissions = user.appPermissions ?? [];
     if (!userPermissions.includes(appName)) {

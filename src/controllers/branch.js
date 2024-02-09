@@ -1,4 +1,5 @@
 // @ts-check
+const { default: mongoose } = require("mongoose");
 const model = require("../models/branch");
 
 const {
@@ -7,6 +8,7 @@ const {
   updateApi,
   softRemoveShowStatus,
   listCommonAggregationFilterize,
+  listAggregation,
   createAggregationPipeline,
   handleAsync,
   constants,
@@ -35,13 +37,15 @@ exports.read = async (req, res) => {
 };
 
 exports.list = async (req, res) => {
-  listCommonAggregationFilterize(
+  // @ts-ignore
+  const { data, total } = await listAggregation(
     req,
     res,
     model,
-    createAggregationPipeline,
+    branchAggregation,
     customParams
   );
+  Response(res, 200, "ok", data, total);
 };
 
 exports.update = handleAsync(async (req, res) => {
@@ -58,20 +62,10 @@ exports.remove = async (req, res) => {
 exports.checkBranchExist = handleAsync(async (req, res, next) => {
   const id = req.params.id;
   const branch = await model.findOne({ _id: id });
-  console.log(branch)
   res.json(branch);
 }, modelName);
 
-// exports.softRemove = async (req, res) => {
-//   await softRemoveShowStatus({ req, res, model: model, status: false });
-// };
-
-// exports.softRemoveUndo = async (req, res) => {
-//   softRemoveShowStatus({ req, res, model: model, status: true });
-// };
-
 // for list aggregation pipeline
-
 const customParams = {
   projectionFields: {
     _id: 1,
@@ -81,4 +75,72 @@ const customParams = {
     updatedAt: 1,
   },
   searchTerms: ["name", "createdAt", "updatedAt"],
+};
+
+const branchAggregation = ({
+  skip = 0,
+  limit = 100,
+  searchTerm = "",
+  columnFilters = [],
+  sortField = "createdAt",
+  sortOrder = -1,
+  ids = [],
+  customParams,
+}) => {
+  const { projectionFields, searchTerms, numericSearchTerms } = customParams;
+  const searching = (field) => {
+    return {
+      [field]: { $regex: searchTerm, $options: "i" },
+    };
+  };
+  let matchStage = {};
+  matchStage = {
+    ...(searchTerm && {
+      $or: [
+        ...(numericSearchTerms.length > 0
+          ? numericSearchTerms.map((search) => {
+              console.log(search);
+              const condition = {};
+              condition[search] = Number(searchTerm);
+              return condition;
+            })
+          : []),
+
+        ...(searchTerms.length > 0
+          ? searchTerms.map((search) => {
+              return searching(search);
+            })
+          : []),
+      ],
+    }),
+    ...(columnFilters.length > 0 && {
+      $and: columnFilters.map((column) => ({
+        [column.id]: { $regex: column.value, $options: "i" },
+      })),
+    }),
+  };
+  return [
+    {
+      $facet: {
+        total: [{ $count: "count" }],
+        data: [
+          { $match: matchStage },
+          {
+            $match: {
+              _id:
+                ids.length > 0
+                  ? { $in: ids.map((id) => new mongoose.Types.ObjectId(id)) }
+                  : { $exists: true },
+            },
+          },
+          { $project: projectionFields },
+          { $sort: { [sortField]: sortOrder } },
+          { $skip: skip },
+          { $limit: limit },
+        ],
+      },
+    },
+    { $unwind: "$total" },
+    { $project: { total: "$total.count", data: "$data" } },
+  ];
 };

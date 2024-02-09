@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@casl/ability": "^6.5.0",
-    "@tablets/express-mongoose-api": "^1.3.6",
+    "@tablets/express-mongoose-api": "^1.4.1",
     "axios": "^1.6.5",
     "bcrypt": "^5.1.1",
     "cloudinary": "^1.41.3",

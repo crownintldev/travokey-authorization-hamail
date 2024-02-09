@@ -18,7 +18,6 @@ passport.use(
           return done(null, false, { message: "Incorrect email." });
         }
         const isMatch = await user.comparePassword(password);
-console.log(isMatch)
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }

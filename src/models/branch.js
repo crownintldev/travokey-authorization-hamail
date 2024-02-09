@@ -12,6 +12,7 @@ const branchSchema = new mongoose.Schema({
     enum: ["active", "disable"],
     default: "active",
   },
+  // added soft deleted field but its not applying due to security reason
   deleted:{
     type: String,
     enum: ['false','true','permanent'],

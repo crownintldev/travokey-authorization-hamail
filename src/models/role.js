@@ -16,6 +16,7 @@ const roleSchema = new mongoose.Schema(
       enum: ["administrator", "account"],
       required: true,
     },
+      // added soft deleted field but its not applying due to security reason
     deleted:{
       type: String,
       enum: ['false','true','permanent'],

@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const {
   handleAsync,
-  // listAggregation,
-  // createAggregationPipeline,
+  listAggregation,
+  createAggregationPipeline,
   aggregationByIds,
   Response,
   lookupUnwindStage,
@@ -46,142 +46,141 @@ exports.update = handleAsync(async (req, res) => {
   return Response(res, 200, `${modelName} Update Successfully`, response);
 }, modelName);
 
-const listAggregation = async (
-  req,
-  res,
-  model,
-  createAggregationPipeline,
-  customParams
-) => {
-  try {
-    const { searchTerm, sortField, columnFilters, deleted, branch } = req.query;
-    let sortOrder = req.query?.sortOrder ? parseInt(req.query?.sortOrder) : -1;
-    let columnFiltersArray = [];
-    if (columnFilters) {
-      columnFiltersArray = JSON.parse(columnFilters);
-    }
-    let limit = req.query?.limit ? parseInt(req.query?.limit) : 20;
-    let page = req.query?.pageNumber ? parseInt(req.query?.pageNumber) : 1;
-    let skip = (page - 1) * limit;
-    const pipeline = createAggregationPipeline({
-      skip,
-      limit,
-      searchTerm,
-      sortField: sortField ? sortField : "createdAt",
-      sortOrder: sortOrder ? sortOrder : 1,
-      columnFilters: columnFiltersArray,
-      deleted: deleted,
-      customParams,
-      branch,
-    });
-    // @ts-ignore
-    const result = await model.aggregate(pipeline);
+// const listAggregation = async (
+//   req,
+//   res,
+//   model,
+//   createAggregationPipeline,
+//   customParams
+// ) => {
+//   try {
+//     const { searchTerm, sortField, columnFilters, deleted, branch } = req.query;
+//     let sortOrder = req.query?.sortOrder ? parseInt(req.query?.sortOrder) : -1;
+//     let columnFiltersArray = [];
+//     if (columnFilters) {
+//       columnFiltersArray = JSON.parse(columnFilters);
+//     }
+//     let limit = req.query?.limit ? parseInt(req.query?.limit) : 20;
+//     let page = req.query?.pageNumber ? parseInt(req.query?.pageNumber) : 1;
+//     let skip = (page - 1) * limit;
+//     const pipeline = createAggregationPipeline({
+//       skip,
+//       limit,
+//       searchTerm,
+//       sortField: sortField ? sortField : "createdAt",
+//       sortOrder: sortOrder ? sortOrder : 1,
+//       columnFilters: columnFiltersArray,
+//       deleted: deleted,
+//       customParams,
+//       branch,
+//     });
+//     // @ts-ignore
+//     const result = await model.aggregate(pipeline);
 
-    const total = result.length > 0 ? result[0].total : 0;
-    const data = result.length > 0 ? result[0].data : [];
+//     const total = result.length > 0 ? result[0].total : 0;
+//     const data = result.length > 0 ? result[0].data : [];
 
-    return { total, data };
-  } catch (error) {
-    console.log(model.modelName, error);
-    Response(res, 400, constants.GET_ERROR);
-  }
-};
-const createAggregationPipeline = ({
-  skip = 0,
-  limit = 100,
-  searchTerm = "",
-  columnFilters = [],
-  deleted = "false",
-  sortField = "createdAt",
-  sortOrder = -1,
-  ids = [],
-  customParams,
-  branch="65c336d6355c2fc50b106bd0", //without branch id it does not work it is fake id
-}) => {
-  const { projectionFields, searchTerms, numericSearchTerms } = customParams;
-  console.log(branch);
-  const lookup = customParams.lookup ? customParams.lookup : [];
-  const searching = (field) => {
-    return {
-      [field]: { $regex: searchTerm, $options: "i" },
-    };
-  };
-  let matchStage = {};
+//     return { total, data };
+//   } catch (error) {
+//     console.log(model.modelName, error);
+//     Response(res, 400, constants.GET_ERROR);
+//   }
+// };
+// const createAggregationPipeline = ({
+//   skip = 0,
+//   limit = 100,
+//   searchTerm = "",
+//   columnFilters = [],
+//   deleted = "false",
+//   sortField = "createdAt",
+//   sortOrder = -1,
+//   ids = [],
+//   customParams,
+//   branch = "65c336d6355c2fc50b106bd0", // it is fake id, without branch id it does not work
+// }) => {
+//   const { projectionFields, searchTerms, numericSearchTerms } = customParams;
+//   const lookup = customParams.lookup ? customParams.lookup : [];
+//   const searching = (field) => {
+//     return {
+//       [field]: { $regex: searchTerm, $options: "i" },
+//     };
+//   };
+//   let matchStage = {};
+//   // if (searchTerm || columnFilters.length > 0) {
+//   // const numericSearchTerm = Number(searchTerm);
+//   matchStage = {
+//     ...(searchTerm && {
+//       $or: [
+//         ...(numericSearchTerms.length > 0
+//           ? numericSearchTerms.map((search) => {
+//               console.log(search);
+//               const condition = {};
+//               condition[search] = Number(searchTerm);
+//               return condition;
+//             })
+//           : []),
 
-  // if (searchTerm || columnFilters.length > 0) {
-  // const numericSearchTerm = Number(searchTerm);
-  matchStage = {
-    ...(searchTerm && {
-      $or: [
-        ...(numericSearchTerms.length > 0
-          ? numericSearchTerms.map((search) => {
-              console.log(search);
-              const condition = {};
-              condition[search] = Number(searchTerm);
-              return condition;
-            })
-          : []),
+//         ...(searchTerms.length > 0
+//           ? searchTerms.map((search) => {
+//               return searching(search);
+//             })
+//           : []),
+//       ],
+//     }),
+//     ...(columnFilters.length > 0 && {
+//       $and: columnFilters.map((column) => ({
+//         [column.id]: { $regex: column.value, $options: "i" },
+//       })),
+//     }),
+//     deleted: deleted,
+//   };
+//   // }
+//   if (branch) {
+//     matchStage.$or = matchStage.$or || [];
+//     matchStage.$or.push(
+//       { branch: new mongoose.Types.ObjectId(branch) },
+//       { branch: branch }
+//     );
+//   }
+//   // data
+//   let dataPipeline = [];
 
-        ...(searchTerms.length > 0
-          ? searchTerms.map((search) => {
-              return searching(search);
-            })
-          : []),
-      ],
-    }),
-    ...(columnFilters.length > 0 && {
-      $and: columnFilters.map((column) => ({
-        [column.id]: { $regex: column.value, $options: "i" },
-      })),
-    }),
-    deleted: deleted,
-  };
-  // }
-  if (branch) {
-    matchStage.$or = matchStage.$or || [];
-    matchStage.$or.push(
-      { branch: new mongoose.Types.ObjectId(branch) },
-      { branch: branch }
-    );
-  }
-  // data
-  let dataPipeline = [];
+//   dataPipeline = dataPipeline.concat([
+//     { $match: matchStage },
+//     // {$match:{branch:"65c336d6355c2fc50b106bd2"}},
+//     {
+//       $match: {
+//         _id:
+//           ids.length > 0
+//             ? { $in: ids.map((id) => new mongoose.Types.ObjectId(id)) }
+//             : { $exists: true },
+//       },
+//     },
+//     // { $match: {branch:  new mongoose.Types.ObjectId("65c336d6355c2fc50b106bd2")}},
+//     {
+//       $project: projectionFields,
+//     },
+//     { $sort: { [sortField]: sortOrder } },
+//     { $skip: skip },
+//     { $limit: limit },
+//   ]);
+//   if (lookup) {
+//     dataPipeline = dataPipeline.concat(...lookup);
+//   }
 
-  
-  dataPipeline = dataPipeline.concat([
-    { $match: matchStage },
-    // {$match:{branch:"65c336d6355c2fc50b106bd2"}},
-    {
-      $match: {
-        _id:
-          ids.length > 0
-            ? { $in: ids.map((id) => new mongoose.Types.ObjectId(id)) }
-            : { $exists: true },
-      },
-    },
-    // { $match: {branch:  new mongoose.Types.ObjectId("65c336d6355c2fc50b106bd2")}},
-    {
-      $project: projectionFields,
-    },
-    { $sort: { [sortField]: sortOrder } },
-    { $skip: skip },
-    { $limit: limit },
-  ]);
-  if (lookup) {
-    dataPipeline = dataPipeline.concat(...lookup);
-  }
-  return [
-    {
-      $facet: {
-        total: [{ $count: "count" }],
-
-        data: dataPipeline,
-      },
-    },
-    { $unwind: "$total" },
-    { $project: { total: "$total.count", data: "$data" } },
-  ];
-};
+//   let countPipeline = [{ $match: matchStage }, { $count: "count" }];
+//   return [
+//     {
+//       $facet: {
+//         totalAll: [{ $count: "count" }],
+//         total: countPipeline,
+//         data: dataPipeline,
+//       },
+//     },
+//     { $unwind: "$total" },
+//     { $project: { total: "$total.count", data: "$data" } },
+//   ];
+// };
 
 exports.list = handleAsync(async (req, res) => {
   const userId = req.user._id;
@@ -209,11 +208,35 @@ exports.list = handleAsync(async (req, res) => {
   Response(res, 200, "ok", userData, total);
 }, modelName);
 
+// const aggregationById = async ({ model, ids, customParams, ownPipeline,req }) => {
+//   // find id required branch and ids
+//   const user = req.user;
+//   const document = ids && ids?.length ? ids : [ids];
+//   let pipeline;
+//   if (customParams) {
+//     // @ts-ignore
+//     pipeline = createAggregationPipeline({
+//       ids: document,
+//       customParams,
+//       branch: req.body.branch ?? user.branch._id,
+//     });
+//   } else if (ownPipeline) {
+//     // @ts-ignore
+//     pipeline = ownPipeline({ ids: document });
+//   }
+
+//   // @ts-ignore
+//   const aggregateResult = await model.aggregate(pipeline);
+//   const response = aggregateResult.length > 0 ? aggregateResult[0].data : [];
+//   return response;
+// };
+
 exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
   const user = req.user;
   const { ids, branch, roles, appPermissions, status } = req.body;
   // console.log(ids,user._id)
   if (appPermissions) {
+    // only those pemission can assign that administrator have.
     if (
       !user.appPermissions.some((permission) =>
         appPermissions.includes(permission)
@@ -226,15 +249,7 @@ exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
       );
     }
   }
-  // if(branch){
-  //   if(user.branch !==branch){
-  //     return Response(
-  //       res,
-  //       400,
-  //       "You can't assign branch that you are not allowed."
-  //     );
-  //   }
-  // }
+
   if (ids.includes(user._id)) {
     return Response(
       res,
@@ -258,17 +273,18 @@ exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
       model,
       ids: ids,
       customParams,
+      req
     });
     return Response(res, 200, `${modelName} Update Successfully`, response);
   }
 }, modelName);
 
 exports.updateFieldAll = handleAsync(async (req, res) => {
-  const { name } = req.body
-  const model = mongoose.model(name)
-  await model.updateMany({}, { $set: {deleted:"false"} });
-  res.status(200).send(`${name} Documents updated successfully.`)
-},"Existing Document")
+  const { name } = req.body;
+  const model = mongoose.model(name);
+  await model.updateMany({}, { $set: { deleted: "false" } });
+  res.status(200).send(`${name} Documents updated successfully.`);
+}, "Existing Document");
 
 // for list aggregation pipeline
 const lookup = [
@@ -294,5 +310,7 @@ const customParams = {
   },
   searchTerms: ["createdAt", "updatedAt"],
 };
+
+
 
 exports.customParams = customParams;
