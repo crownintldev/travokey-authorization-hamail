@@ -8,12 +8,14 @@ const {
   softRemoveShowStatus,
   listCommonAggregationFilterize,
   aggregationByIds,
-  createAggregationPipeline,
+  // createAggregationPipeline,
   lookupUnwindStage,
   handleAsync,
   constants,
   Response,
+  listAggregation,
 } = require("@tablets/express-mongoose-api");
+const mongoose = require("mongoose")
 
 let model = Role;
 let modelName = model.modelName;
@@ -54,13 +56,15 @@ exports.read = async (req, res) => {
 };
 
 exports.list = async (req, res) => {
-  listCommonAggregationFilterize(
+  // @ts-ignore
+  const {data,total}=await listAggregation(
     req,
     res,
     model,
     createAggregationPipeline,
     customParams
   );
+  return Response(res,200,"ok",data,total)
 };
 
 exports.update = handleAsync(async (req, res) => {
@@ -73,14 +77,6 @@ exports.update = handleAsync(async (req, res) => {
 exports.remove = async (req, res) => {
   await removeMany(req, res, model);
 };
-
-// exports.softRemove = async (req, res) => {
-//   await softRemoveShowStatus({ req, res, model: model, status: false });
-// };
-
-// exports.softRemoveUndo = async (req, res) => {
-//   softRemoveShowStatus({ req, res, model: model, status: true });
-// };
 
 // for list aggregation pipeline
 
@@ -95,3 +91,102 @@ const customParams = {
   },
   searchTerms: ["name", "permission.name", "createdAt", "updatedAt"],
 };
+
+
+const createAggregationPipeline = ({
+  skip = 0,
+  limit = 100,
+  searchTerm = "",
+  columnFilters = [],
+  deleted = "false",
+  sortField = "createdAt",
+  sortOrder = -1,
+  ids = [],
+  customParams,
+  branch = "65c336d6355c2fc50b106bd0", // it is fake id, without branch id it does not work
+}) => {
+  const { projectionFields, searchTerms, numericSearchTerms } = customParams;
+
+  const lookup = customParams.lookup ? customParams.lookup : [];
+  const searching = (field) => {
+    return {
+      [field]: { $regex: searchTerm, $options: "i" },
+    };
+  };
+  let matchStage = {};
+
+  // if (searchTerm || columnFilters.length > 0) {
+  // const numericSearchTerm = Number(searchTerm);
+  // @ts-ignore
+  matchStage = {
+    ...(searchTerm && {
+      $or: [
+        ...(numericSearchTerms.length > 0
+          ? numericSearchTerms.map((search) => {
+              console.log(search);
+              const condition = {};
+              condition[search] = Number(searchTerm);
+              return condition;
+            })
+          : []),
+
+        ...(searchTerms.length > 0
+          ? searchTerms.map((search) => {
+              return searching(search);
+            })
+          : []),
+      ],
+    }),
+    ...(columnFilters.length > 0 && {
+      $and: columnFilters.map((column) => ({
+        [column.id]: { $regex: column.value, $options: "i" },
+      })),
+    }),
+    deleted: deleted,
+  };
+  // }
+  // if (branch) {
+  //   matchStage.$or = matchStage.$or || [];
+  //   matchStage.$or.push(
+  //     { branch: new mongoose.Types.ObjectId(branch) },
+  //     { "branch._id": branch }
+  //   );
+  // }
+  // data
+  let dataPipeline = [];
+
+  dataPipeline = dataPipeline.concat([
+    { $match: matchStage },
+    // { $match: { show: { $ne: showRemove } } },
+    {
+      $match: {
+        _id:
+          ids.length > 0
+            ? { $in: ids.map((id) => new mongoose.Types.ObjectId(id)) }
+            : { $exists: true },
+      },
+    },
+    {
+      $project: projectionFields,
+    },
+    { $sort: { [sortField]: sortOrder } },
+    { $skip: skip },
+    { $limit: limit },
+  ]);
+  if (lookup) {
+    dataPipeline = dataPipeline.concat(...lookup);
+  }
+  let countPipeline = [{ $match: matchStage }, { $count: "count" }];
+  return [
+    {
+      $facet: {
+        totalAll: [{ $count: "count" }],
+        total: countPipeline,
+        data: dataPipeline,
+      },
+    },
+    { $unwind: "$total" },
+    { $project: { total: "$total.count", data: "$data" } },
+  ];
+};
+
