@@ -36,6 +36,7 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
   }
 
   if (!user.status || user?.status !== "active") {
+    console.log("Your Account is not Active! *Contact Administrator*");
     return Response(
       res,
       400,
@@ -44,6 +45,9 @@ exports.requireSignin = handleAsync(async (req, res, next) => {
   }
 
   if (!user.branch || user.branch.status !== "active") {
+    console.log(
+      "Branch is Not Active or not Assigned, *Contact Administrator*"
+    );
     return Response(
       res,
       410,
@@ -62,6 +66,7 @@ exports.appCheckPost = (appName) => async (req, res, next) => {
   const user = req.user;
   let userPermissions = user?.appPermissions ?? [];
   if (!userPermissions.includes(appName)) {
+    console.log("You do not have Permission of this App ---");
     return Response(res, 401, "You do not have Permission of this App");
   } else {
     next();
@@ -73,26 +78,18 @@ exports.modelCheckPost = (collectionName) => async (req, res, next) => {
   // Check roles
   if (collectionName) {
     if (!user.roles || !user.roles.list) {
+      console.log("You do not have Roles of this App ---");
       return Response(res, 401, "You do not have Roles of this App ---");
     }
+    if (user.roles.title === "administrator") {
+      return next();
+    }
     const rolesList = user.roles?.list.map((item) => item);
-    if (!rolesList.includes("manage-all")) {
-      // const requiredRoles = [
-      //   `${collectionName}-create`,
-      //   `${collectionName}-delete`,
-      //   `${collectionName}-post`,
-      //   `${collectionName}-read`,
-      // ];
-      // if (!requiredRoles.some((role) => roles.includes(role))) {
-      //   return Response(res, 401, "You do not have Roles of this App");
-      // }
-      if (!rolesList.includes(collectionName)) {
-        return Response(res, 401, "You do not have Roles of this App");
-      } else {
-        next();
-      }
-    } else if (rolesList.title === "administrator") {
-      next();
+    if (rolesList.includes(collectionName)) {
+      return next();
+    } else {
+      console.log("You do not have Roles of this App ---");
+      return Response(res, 401, "You do not have Roles of this App");
     }
   }
   // Check branch if required
@@ -100,36 +97,30 @@ exports.modelCheckPost = (collectionName) => async (req, res, next) => {
     next();
   }
 };
+
 exports.appModelCheckPost =
-(appName, collectionName) => async (req, res, next) => {
+  (appName, collectionName) => async (req, res, next) => {
     const user = req.user;
     let userPermissions = user.appPermissions ?? [];
     if (!userPermissions.includes(appName)) {
+      console.log("You do not have Permission of this App ---");
       return Response(res, 401, "You do not have Permission of this App");
     }
     // Check roles
     if (collectionName) {
       if (!user.roles || !user.roles.list) {
+        console.log("You do not have Roles of this App ---");
         return Response(res, 401, "You do not have Roles of this App ---");
       }
+      if (user.roles.title === "administrator") {
+        return next();
+      }
       const rolesList = user.roles?.list.map((item) => item);
-      if (!rolesList.includes("manage-all")) {
-        // const requiredRoles = [
-        //   `${collectionName}-create`,
-        //   `${collectionName}-delete`,
-        //   `${collectionName}-post`,
-        //   `${collectionName}-read`,
-        // ];
-        // if (!requiredRoles.some((role) => roles.includes(role))) {
-        //   return Response(res, 401, "You do not have Roles of this App");
-        // }
-        if (!rolesList.includes(collectionName)) {
-          return Response(res, 401, "You do not have Roles of this App");
-        } else {
-          next();
-        }
-      } else if (rolesList.includes("manage-all")) {
-        next();
+      if (rolesList.includes(collectionName)) {
+        return next();
+      } else {
+        console.log("You do not have Roles of this App ---");
+        return Response(res, 401, "You do not have Roles of this App");
       }
     }
     // Check branch if required
