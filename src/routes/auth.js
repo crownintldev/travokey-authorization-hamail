@@ -15,7 +15,7 @@ const {
   appCheckPost,
 } = require("../middleware/auth-middleware");
 
-router.post("/auth/signup", signup);
+router.post("/auth/signup",requireSignin, appCheckPost("administrator"),signup);
 router.post("/auth/signin", signin);
 router.post("/auth/getUserFromToken",getUserFromToken);
 router.post("/auth/logout", requireSignin, logout);

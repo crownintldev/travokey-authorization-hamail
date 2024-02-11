@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 const {
   handleAsync,
   constants,
-  aggregationByIds,
   Response,
 } = require("@tablets/express-mongoose-api");
-const { customParams } = require("./user");
+
+const { customParams, createAggregationPipeline } = require("./user");
 const { expressjwt: expressJwt } = require("express-jwt"); // for authorization
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
@@ -17,29 +17,20 @@ const model = mongoose.model(`${modelName}`);
 exports.signup = handleAsync(async (req, res) => {
   const data = req.body;
   let { password, roles, permissions, status } = data;
-  // if (roles) {
-  //   data.roles = user.roles;
-  // }
-  // if (permissions) {
-  //   data.permissions = user.permissions;
-  // }
-  // if (status) {
-  //   data.status = user.status;
-  // }
   if (password) {
     await model.hashing(data);
   }
   const api = new model(data);
-
-  const accessToken = await api.generateAuthToken(req, res);
-
   const signUser = await api.save();
-  const response = await aggregationByIds({
-    model,
-    ids: [signUser._id],
-    customParams,
-  });
-  return Response(res, 200, `${modelName} Create Successfully`, signUser,1,{accessToken});
+  if (signUser._id) {
+    const pipeline = createAggregationPipeline({
+      ids: [signUser._id],
+      customParams,
+    });
+    const aggregateResult = await model.aggregate(pipeline);
+    const response = aggregateResult.length > 0 ? aggregateResult[0].data : [];
+    return Response(res, 200, `${modelName} Create Successfully`, response);
+  }
 }, modelName);
 
 exports.me = handleAsync(async (req, res) => {
@@ -53,9 +44,9 @@ exports.me = handleAsync(async (req, res) => {
   const user = req.user;
   const { tokens, ...otherfield } = user;
 
-return Response(res, 201, constants.USER_LOGIN_SUCCESS, otherfield, 1, {
-  accessToken: token,
-});
+  return Response(res, 201, constants.USER_LOGIN_SUCCESS, otherfield, 1, {
+    accessToken: token,
+  });
 }, modelName);
 
 exports.signin = handleAsync(async (req, res, next) => {
@@ -71,7 +62,7 @@ exports.signin = handleAsync(async (req, res, next) => {
       const accessToken = await user.generateAuthToken(req, res);
 
       const signUser = await user.save();
-     
+
       return Response(res, 201, constants.USER_LOGIN_SUCCESS, signUser, 1, {
         accessToken,
       });
@@ -111,7 +102,7 @@ exports.getUserFromToken = async (req, res) => {
       .findOne({ _id: decoded._id, "tokens.token": { $in: token } })
       .populate("roles")
       .populate("branch")
-      .select("-tokens")
+      .select("-tokens");
 
     if (!user) {
       return Response(res, 401, "unauthorized");

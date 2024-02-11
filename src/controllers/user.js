@@ -204,7 +204,7 @@ const customParams = {
     username: 1,
     email: 1,
     phoneNumber: 1,
-    address: 1,
+    // address: 1,
     gender: 1,
     status: 1,
     roles: 1,
@@ -276,7 +276,9 @@ const createAggregationPipeline = ({
   // }
   // data
   let dataPipeline = [];
-
+  if (lookup) {
+    dataPipeline = dataPipeline.concat(...lookup);
+  }
   dataPipeline = dataPipeline.concat([
     { $match: matchStage },
     // {$match:{branch:"65c336d6355c2fc50b106bd2"}},
@@ -296,9 +298,7 @@ const createAggregationPipeline = ({
     { $skip: skip },
     { $limit: limit },
   ]);
-  if (lookup) {
-    dataPipeline = dataPipeline.concat(...lookup);
-  }
+ 
 
   let countPipeline = [{ $match: matchStage }, { $count: "count" }];
   return [
@@ -314,5 +314,5 @@ const createAggregationPipeline = ({
   ];
 };
 
-
+exports.createAggregationPipeline = createAggregationPipeline;
 exports.customParams = customParams;
