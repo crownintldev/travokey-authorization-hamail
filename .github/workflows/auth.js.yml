@@ -14,9 +14,9 @@ jobs:
       PORT: 2999
       SECRET_KEY: SFSFGSDFW$%DFGDFGDFG2313
       JWT_SECRET: DFGDFGDFGD35345435FDGDFG
-      AUTHAPI: https://evisa-travokey-authorization-production.up.railway.app/api
-      AccountApp: http://localhost:4000/api
-      NextApp: http://localhost:3000
+      NEXT_PUBLIC_AUTH: http://89.116.21.11/authapi
+      AccountApp: http://89.116.21.11/api
+      NextApp: http://89.116.21.11
 
     steps:
       - name: Checkout Repository
