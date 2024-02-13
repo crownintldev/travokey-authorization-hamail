@@ -14,7 +14,7 @@ jobs:
       PORT: 2999
       SECRET_KEY: SFSFGSDFW$%DFGDFGDFG2313
       JWT_SECRET: DFGDFGDFGD35345435FDGDFG
-      NEXT_PUBLIC_AUTH: http://89.116.21.11/authapi
+      AUTHAPI: http://89.116.21.11/authapi
       AccountApp: http://89.116.21.11/api
       NextApp: http://89.116.21.11
 
