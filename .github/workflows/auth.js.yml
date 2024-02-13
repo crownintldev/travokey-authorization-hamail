@@ -1,8 +1,8 @@
-name: Node.js CI/CD
+name: Travokey Auth Application
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-and-deploy:
@@ -19,33 +19,35 @@ jobs:
       NextApp: http://localhost:3000
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      
-    - name: Cache Node Modules
-      uses: actions/cache@v2
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-  
-    - name: Install Dependencies
-      run: npm ci
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Build Application
-      run: npm run build
+      - name: Cache Node Modules
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-    - name: Optimize Memory Usage
-      run: export NODE_OPTIONS="--max_old_space_size=4096"
+      - name: Install Dependencies
+        run: npm install
 
-    - name: Stop Existing Process
-      run: pm2 stop "travokey-auth" || true # '|| true' ensures that the workflow doesn't fail if pm2 stop fails
+      - name: Optimize Memory Usage
+        run: export NODE_OPTIONS="--max_old_space_size=4096"
 
-    - name: Start Application
-      run: pm2 start travokey-auth
+      - name: Stop Existing PM2 Process if It Exists
+        run: |
+          if pm2 list | grep -q "travokey-auth"; then
+            pm2 delete "travokey-auth"
+          else
+            echo "PM2 process 'travokey-auth' not found, skipping stop command."
+          fi
 
-    - name: Deployment Status
-      run: echo "Deployment successfully!"
+      - name: Start Application
+        run: pm2 start npm --name "travokey-auth" -- run start
 
-      # pm2 start npm --name "travokey-frontend" -- run start
+      - name: Deployment Status
+        run: echo "Deployment successfully!"
+
+        # pm2 start npm --name "travokey-frontend" -- run start
