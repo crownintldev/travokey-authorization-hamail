@@ -1,0 +1,51 @@
+name: Node.js CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: self-hosted
+
+    env:
+      DB: mongodb+srv://crownintltechnology:crownintldev%402007@cluster0.co9fnr8.mongodb.net/auth
+      PORT: 2999
+      SECRET_KEY: SFSFGSDFW$%DFGDFGDFG2313
+      JWT_SECRET: DFGDFGDFGD35345435FDGDFG
+      AUTHAPI: https://evisa-travokey-authorization-production.up.railway.app/api
+      AccountApp: http://localhost:4000/api
+      NextApp: http://localhost:3000
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      
+    - name: Cache Node Modules
+      uses: actions/cache@v2
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+  
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Build Application
+      run: npm run build
+
+    - name: Optimize Memory Usage
+      run: export NODE_OPTIONS="--max_old_space_size=4096"
+
+    - name: Stop Existing Process
+      run: pm2 stop "travokey-auth" || true # '|| true' ensures that the workflow doesn't fail if pm2 stop fails
+
+    - name: Start Application
+      run: pm2 start travokey-auth
+
+    - name: Deployment Status
+      run: echo "Deployment successfully!"
+
+      # pm2 start npm --name "travokey-frontend" -- run start
