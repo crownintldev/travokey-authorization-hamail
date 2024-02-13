@@ -65,14 +65,14 @@ const permission = require("./routes/permission");
 const branch = require("./routes/branch");
 
 //routes
-app.use("/api", auth);
-app.use("/api", user);
-app.use("/api",role);
+app.use("/authapi", auth);
+app.use("/authapi", user);
+app.use("/authapi",role);
 // app.use("/api", requireSignin,permission);
-app.use("/api", branch);
+app.use("/authapi", branch);
 
 app.listen(port, () => {
   console.log(
-    `App is running:: \naddress: http://localhost:${port}/api \nport: ${port}`
+    `App is running:: \naddress: http://localhost:${port}/authapi \nport: ${port}`
   );
 });
