@@ -14,9 +14,9 @@ jobs:
       PORT: 2999
       SECRET_KEY: SFSFGSDFW$%DFGDFGDFG2313
       JWT_SECRET: DFGDFGDFGD35345435FDGDFG
-      AUTHAPI: http://89.116.21.11/authapi
-      AccountApp: http://89.116.21.11/api
-      NextApp: http://89.116.21.11
+      AUTHAPI: https://soch.tech/authapi
+      AccountApp: https://soch.tech/api
+      NextApp: https://soch.tech/
 
     steps:
       - name: Checkout Repository
