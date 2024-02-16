@@ -8,6 +8,7 @@ const {
   lookupUnwindStage,
   IsArray,
   createCache,
+  removeMany
 } = require("@tablets/express-mongoose-api");
 
 const { hashing } = require("../models/user");
@@ -185,6 +186,10 @@ exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
   }
 }, modelName);
 
+exports.remove = async (req, res) => {
+  console.log("dfgfdgdfgdfgdfg")
+  await removeMany(req, res, model);
+};
 exports.updateFieldAll = handleAsync(async (req, res) => {
   const { name } = req.body;
   const model = mongoose.model(name);

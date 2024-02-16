@@ -2,7 +2,13 @@
 const express = require("express");
 const router = express.Router();
 
-const { update, list,editUserbyAdministrator,updateFieldAll } = require("../controllers/user");
+const {
+  update,
+  list,
+  editUserbyAdministrator,
+  updateFieldAll,
+  remove,
+} = require("../controllers/user");
 const {
   requireSignin,
   appModelCheckPost,
@@ -12,6 +18,12 @@ router.put(
   "/user/update",
   // appCheckPost("account","user"),
   update
+);
+router.post(
+  "/user/remove",
+  requireSignin,
+  appModelCheckPost("administrator"),
+  remove
 );
 router.put(
   "/user/editUserbyAdministrator",
@@ -25,5 +37,6 @@ router.get(
   appModelCheckPost("administrator"),
   list
 );
+
 router.put("/updateall", updateFieldAll);
 module.exports = router;
