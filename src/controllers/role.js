@@ -37,12 +37,12 @@ exports.create = handleAsync(async (req, res) => {
     }
   }
   const role = await createApi(model, req.body);
-  const response = await aggregationByIds({
-    model,
-    ids: [role._id],
-    customParams,
-  });
-  return Response(res, 200, "Agent Create Successfully", response, 1);
+  // const response = await aggregationByIds({
+  //   model,
+  //   ids: [role._id],
+  //   customParams,
+  // });
+  return Response(res, 200, "Agent Create Successfully", [role], 1);
 }, modelName);
 
 exports.read = async (req, res) => {
@@ -70,8 +70,8 @@ exports.list = async (req, res) => {
 exports.update = handleAsync(async (req, res) => {
   const id = req.params.id;
   const role = await updateApi(model, id, req.body);
-  const response = await aggregationByIds({ model, ids: [role._id], customParams });
-  return Response(res, 200, "ok", response);
+  // const response = await aggregationByIds({ model, ids: [role._id], customParams });
+  return Response(res, 200, "ok", [role]);
 }, modelName);
 
 exports.remove = async (req, res) => {

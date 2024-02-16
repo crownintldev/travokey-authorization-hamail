@@ -60,10 +60,10 @@ exports.signin = handleAsync(async (req, res, next) => {
         return Response(res, 500, "Internal Server Error");
       }
       const accessToken = await user.generateAuthToken(req, res);
-
       const signUser = await user.save();
-
-      return Response(res, 201, constants.USER_LOGIN_SUCCESS, signUser, 1, {
+      const {_id,username,password,email,status,roles,appPermissions,branch,deleted} = signUser;
+      const data={_id,username,password,email,status,roles,appPermissions,branch,deleted};
+      return Response(res, 201, constants.USER_LOGIN_SUCCESS, data, 1, {
         accessToken,
       });
     });
