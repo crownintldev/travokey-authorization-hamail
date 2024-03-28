@@ -8,10 +8,11 @@ const {
   lookupUnwindStage,
   IsArray,
   createCache,
-  removeMany
+  removeMany,
+  removeUndefined
 } = require("@tablets/express-mongoose-api");
 
-const { hashing } = require("../models/user");
+
 
 const modelName = "User";
 const model = mongoose.model(`${modelName}`);
@@ -140,7 +141,7 @@ exports.list = handleAsync(async (req, res) => {
 
 exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
   const user = req.user;
-  const { ids, branch, roles, appPermissions, status } = req.body;
+  const { ids, branch, roles, appPermissions, status,password } = req.body;
   // console.log(ids,user._id)
   if (appPermissions) {
     // only those pemission can assign that administrator have.
@@ -164,11 +165,17 @@ exports.editUserbyAdministrator = handleAsync(async (req, res, next) => {
       "Administrator can't update his own role, Contact Super Admin"
     );
   }
-
-  const data = { branch, roles, appPermissions, status };
+ 
+  let data = { branch, roles, appPermissions, status,password };
+  if (password) {
+    await model.hashing(data);
+  }
+  
+  removeUndefined(data)
   if (!ids || !ids.length === 0) {
     IsArray(ids, res);
   }
+
   const result = await model.updateMany(
     { _id: { $in: ids } },
     { $set: data },
